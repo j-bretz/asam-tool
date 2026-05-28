@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASAM Medical Necessity Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f2f5;
+  --surface: #ffffff;
+  --header: #0f1b2d;
+  --header-border: #1e3352;
+  --accent: #1d6fa4;
+  --accent-hover: #155d8a;
+  --accent-light: #dbeeff;
+  --primary-badge-bg: #e6f4ea;
+  --primary-badge: #1a6b35;
+  --text: #1a2030;
+  --text-secondary: #6b7585;
+  --border: #dde1e8;
+  --border-focus: #1d6fa4;
+  --output-bg: #f7f9fb;
+  --warning-bg: #fffbeb;
+  --warning-border: #fcd34d;
+  --warning-text: #92400e;
+  --continued-bg: #f0f7ff;
+  --continued-border: #bfd7f0;
+  --dim-inactive: #9aa3b0;
+  --primary-dot: #1d6fa4;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ─── HEADER ─────────────────────────────── */
+.app-header {
+  background: var(--header);
+  border-bottom: 1px solid var(--header-border);
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+.header-left { display: flex; align-items: baseline; gap: 12px; }
+.app-title { font-size: 14px; font-weight: 600; color: #ffffff; letter-spacing: 0.01em; }
+.app-subtitle { font-size: 11px; color: #607a9a; }
+.header-badge {
+  background: #1a3a5c;
+  border: 1px solid #2a5a8c;
+  color: #7eb8e8;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+/* ─── TOOLBAR ─────────────────────────────── */
+.toolbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.toolbar-group { display: flex; flex-direction: column; gap: 3px; }
+.toolbar-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+}
+select.ctrl, input.ctrl {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 10px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: white;
+  outline: none;
+  height: 32px;
+  transition: border-color 0.15s;
+}
+select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
+.toggle-group { display: flex; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; height: 32px; }
+.toggle-btn {
+  padding: 0 14px;
+  border: none;
+  background: white;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.toggle-btn + .toggle-btn { border-left: 1px solid var(--border); }
+.toggle-btn.active { background: var(--accent); color: white; }
+
+/* ─── MAIN LAYOUT ─────────────────────────── */
+.main-layout {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  height: calc(100vh - 52px - 54px);
+}
+
+/* ─── LEFT PANEL ──────────────────────────── */
+.left-panel {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  overflow: hidden;
+  position: relative;
+}
+.no-loc-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  font-size: 13px;
+  color: var(--text-secondary);
+  backdrop-filter: blur(2px);
+}
+
+/* DIM TABS */
+.dim-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+.dim-tabs::-webkit-scrollbar { height: 0; }
+.dim-tab {
+  padding: 9px 10px 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dim-inactive);
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.01em;
+}
+.dim-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--surface); }
+.dim-tab.is-primary { color: var(--text); }
+.dim-tab.is-primary.active { color: var(--accent); }
+.primary-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+/* DIM CONTENT */
+.dim-content { flex: 1; overflow-y: auto; padding: 18px; }
+.dim-content::-webkit-scrollbar { width: 4px; }
+.dim-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.dim-panel { display: none; }
+.dim-panel.active { display: block; }
+
+.dim-header { margin-bottom: 14px; }
+.primary-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--primary-badge-bg);
+  color: var(--primary-badge);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.dim-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.dim-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+
+/* FORM ELEMENTS */
+.form-group { margin-bottom: 12px; }
+.form-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.form-select, .form-input {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  color: var(--text);
+  background: white;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-select:focus, .form-input:focus { border-color: var(--border-focus); }
+.form-textarea {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  color: var(--text);
+  background: white;
+  outline: none;
+  resize: vertical;
+  min-height: 64px;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+}
+.form-textarea:focus { border-color: var(--border-focus); }
+.form-textarea::placeholder, .form-input::placeholder { color: #b0b8c5; }
+
+.score-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.severity-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+.severity-pill {
+  padding: 5px 11px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: white;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--text-secondary);
+}
+.severity-pill.selected {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 168px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--output-bg);
+}
+.checkbox-group::-webkit-scrollbar { width: 3px; }
+.checkbox-group::-webkit-scrollbar-thumb { background: var(--border); }
+.checkbox-item { display: flex; align-items: flex-start; gap: 7px; cursor: pointer; }
+.checkbox-item input[type="checkbox"] { accent-color: var(--accent); margin-top: 1px; flex-shrink: 0; }
+.checkbox-item span { font-size: 12px; color: var(--text); line-height: 1.4; }
+
+.divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+.continued-section {
+  background: var(--continued-bg);
+  border: 1px solid var(--continued-border);
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 14px;
+}
+.continued-section-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+/* ─── RIGHT PANEL ─────────────────────────── */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--output-bg);
+  overflow: hidden;
+}
+.output-toolbar {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.output-toolbar-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+}
+.output-area { flex: 1; overflow-y: auto; padding: 24px; }
+.output-area::-webkit-scrollbar { width: 5px; }
+.output-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* PLACEHOLDER */
+.output-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 10px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.placeholder-icon { font-size: 36px; opacity: 0.25; }
+.placeholder-text { font-size: 13px; line-height: 1.6; }
+
+/* OUTPUT DOC */
+.output-doc { display: none; max-width: 660px; }
+.output-doc.visible { display: block; }
+
+.doc-header { padding-bottom: 14px; margin-bottom: 20px; border-bottom: 2px solid var(--text); }
+.doc-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.doc-meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--text-secondary); }
+.doc-meta span { display: flex; align-items: center; gap: 4px; }
+.doc-meta span::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.doc-meta span:first-child::before { display: none; }
+
+.doc-section { margin-bottom: 18px; }
+.doc-section-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--accent);
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--accent-light);
+}
+.doc-section-text {
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+/* BUTTONS */
+.btn {
+  padding: 7px 15px;
+  border-radius: 5px;
+  border: none;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  background: white;
+}
+.btn-ghost:hover { background: var(--bg); }
+
+/* GENERATE BAR */
+.generate-bar {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.generate-bar-hint { font-size: 11px; color: var(--text-secondary); }
+
+.copy-feedback {
+  font-size: 11px;
+  color: var(--primary-badge);
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.copy-feedback.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══════════════════════════════════════ -->
+<div class="app-header">
+  <div class="header-left">
+    <div class="app-title">ASAM Medical Necessity Generator</div>
+    <div class="app-subtitle">Six-Dimension Documentation Tool</div>
+  </div>
+  <div class="header-badge">Clinical Use Only</div>
+</div>
+
+<!-- ═══ TOOLBAR ═══════════════════════════════════════ -->
+<div class="toolbar">
+  <div class="toolbar-group">
+    <span class="toolbar-label">Level of Care</span>
+    <select class="ctrl" id="locSelect" style="width:260px">
+      <option value="">— Select LOC —</option>
+      <option value="1.0">1.0 · Outpatient Services</option>
+      <option value="2.1">2.1 · Intensive Outpatient (IOP)</option>
+      <option value="2.5">2.5 · Partial Hospitalization (PHP)</option>
+      <option value="3.5">3.5 · Clinically Managed High-Intensity Residential</option>
+      <option value="3.7">3.7 · Medically Monitored Intensive Inpatient</option>
+      <option value="3.7WM">3.7WM · Medically Monitored Withdrawal Management</option>
+    </select>
+  </div>
+  <div class="toolbar-group">
+    <span class="toolbar-label">Document Type</span>
+    <div class="toggle-group">
+      <button class="toggle-btn active" id="btnInitial" onclick="setAdmissionType('initial')">Initial Admission</button>
+      <button class="toggle-btn" id="btnContinued" onclick="setAdmissionType('continued')">Continued Stay</button>
+    </div>
+  </div>
+  <div class="toolbar-group">
+    <span class="toolbar-label">Client Name / Initials</span>
+    <input type="text" class="ctrl" id="clientName" placeholder="e.g. J.D." style="width:140px" oninput="state.clientName=this.value">
+  </div>
+  <div class="toolbar-group">
+    <span class="toolbar-label">Date</span>
+    <input type="date" class="ctrl" id="docDate" style="width:140px" oninput="state.date=this.value">
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══════════════════════════════════════ -->
+<div class="main-layout">
+
+  <!-- ── LEFT: DIMENSION INPUTS ── -->
+  <div class="left-panel">
+    <div id="noLocOverlay" class="no-loc-overlay">Select a Level of Care above to begin</div>
+
+    <div class="dim-tabs" id="dimTabs">
+      <button class="dim-tab active" data-dim="1" onclick="showDim(1,this)">Dim 1</button>
+      <button class="dim-tab" data-dim="2" onclick="showDim(2,this)">Dim 2</button>
+      <button class="dim-tab" data-dim="3" onclick="showDim(3,this)">Dim 3</button>
+      <button class="dim-tab" data-dim="4" onclick="showDim(4,this)">Dim 4</button>
+      <button class="dim-tab" data-dim="5" onclick="showDim(5,this)">Dim 5</button>
+      <button class="dim-tab" data-dim="6" onclick="showDim(6,this)">Dim 6</button>
+    </div>
+
+    <div class="dim-content">
+
+      <!-- ── DIM 1 ── -->
+      <div class="dim-panel active" id="dim-1">
+        <div class="dim-header">
+          <div id="dim1-badge"></div>
+          <div class="dim-name">Dimension 1 — Acute Intoxication / Withdrawal Potential</div>
+          <div class="dim-desc">Current intoxication state, withdrawal risk, and degree of medical monitoring required.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Withdrawal Severity</label>
+          <div class="severity-pills" id="dim1-sev-pills">
+            <button class="severity-pill" onclick="setSeverity('dim1','severity','none',this)">None / N/A</button>
+            <button class="severity-pill" onclick="setSeverity('dim1','severity','mild',this)">Mild</button>
+            <button class="severity-pill" onclick="setSeverity('dim1','severity','moderate',this)">Moderate</button>
+            <button class="severity-pill" onclick="setSeverity('dim1','severity','severe',this)">Severe</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Primary Substance(s)</label>
+          <input class="form-input" placeholder="e.g. alcohol, opioids, benzodiazepines" oninput="state.dim1.substances=this.value">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Last Use</label>
+          <input class="form-input" placeholder="e.g. 48 hours prior to admission" oninput="state.dim1.lastUse=this.value">
+        </div>
+
+        <div class="score-row">
+          <div class="form-group">
+            <label class="form-label">CIWA-Ar Score (alcohol)</label>
+            <input class="form-input" type="number" min="0" max="67" placeholder="0–67" oninput="state.dim1.ciwa=this.value">
+          </div>
+          <div class="form-group">
+            <label class="form-label">COWS Score (opioid)</label>
+            <input class="form-input" type="number" min="0" max="48" placeholder="0–48" oninput="state.dim1.cows=this.value">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Active Withdrawal Symptoms</label>
+          <div id="dim1-symptoms" class="checkbox-group"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">History of Complicated Withdrawal</label>
+          <select class="form-select" onchange="state.dim1.complicatedHistory=this.value">
+            <option value="">— Select —</option>
+            <option value="none">No significant history</option>
+            <option value="seizure">Prior withdrawal-related seizure(s)</option>
+            <option value="dt">Prior delirium tremens (DTs)</option>
+            <option value="hospitalization">Prior hospitalization for withdrawal</option>
+            <option value="multiple">Multiple of the above</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Additional Clinical Observations</label>
+          <textarea class="form-textarea" placeholder="Any other relevant withdrawal or intoxication details…" oninput="state.dim1.notes=this.value"></textarea>
+        </div>
+
+        <div class="continued-section" id="dim1-cs" style="display:none">
+          <div class="continued-section-title">Continued Stay — Dimension 1</div>
+          <div class="form-group">
+            <label class="form-label">Current Withdrawal Status</label>
+            <select class="form-select" onchange="state.dim1.csStatus=this.value">
+              <option value="">— Select —</option>
+              <option value="ongoing">Withdrawal ongoing, not yet stabilized</option>
+              <option value="stabilizing">Stabilizing but requiring continued monitoring</option>
+              <option value="resolved_risk">Withdrawal resolved; medical risk profile remains</option>
+              <option value="resolved">Resolved; no longer a primary continued stay driver</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Response to Treatment / Progress</label>
+            <textarea class="form-textarea" placeholder="Describe client's response to withdrawal management to date…" oninput="state.dim1.csProgress=this.value"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DIM 2 ── -->
+      <div class="dim-panel" id="dim-2">
+        <div class="dim-header">
+          <div id="dim2-badge"></div>
+          <div class="dim-name">Dimension 2 — Biomedical Conditions and Complications</div>
+          <div class="dim-desc">Physical health conditions requiring medical attention or complicating SUD treatment.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Biomedical Severity</label>
+          <div class="severity-pills" id="dim2-sev-pills">
+            <button class="severity-pill" onclick="setSeverity('dim2','severity','none',this)">None</button>
+            <button class="severity-pill" onclick="setSeverity('dim2','severity','low',this)">Low</button>
+            <button class="severity-pill" onclick="setSeverity('dim2','severity','moderate',this)">Moderate</button>
+            <button class="severity-pill" onclick="setSeverity('dim2','severity','high',this)">High</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Active Medical Conditions / Diagnoses</label>
+          <textarea class="form-textarea" placeholder="e.g. Hepatitis C, COPD, hypertension, diabetes, chronic pain, TBI, HIV…" oninput="state.dim2.conditions=this.value"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">How Conditions Complicate Treatment</label>
+          <textarea class="form-textarea" placeholder="Describe how medical conditions affect safe engagement in lower levels of care…" oninput="state.dim2.impact=this.value"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Medications Requiring Clinical Management</label>
+          <input class="form-input" placeholder="e.g. MAT induction, insulin management, cardiac medications…" oninput="state.dim2.medications=this.value">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Additional Clinical Observations</label>
+          <textarea class="form-textarea" placeholder="Other relevant biomedical details…" oninput="state.dim2.notes=this.value"></textarea>
+        </div>
+
+        <div class="continued-section" id="dim2-cs" style="display:none">
+          <div class="continued-section-title">Continued Stay — Dimension 2</div>
+          <div class="form-group">
+            <label class="form-label">Current Medical Status</label>
+            <select class="form-select" onchange="state.dim2.csStatus=this.value">
+              <option value="">— Select —</option>
+              <option value="unresolved">Conditions unresolved; ongoing monitoring required</option>
+              <option value="improving">Improving but requiring continued clinical oversight</option>
+              <option value="stable">Medically stable; not a primary continued stay driver</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Progress / Response to Treatment</label>
+            <textarea class="form-textarea" placeholder="Describe progress in managing biomedical conditions…" oninput="state.dim2.csProgress=this.value"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DIM 3 ── -->
+      <div class="dim-panel" id="dim-3">
+        <div class="dim-header">
+          <div id="dim3-badge"></div>
+          <div class="dim-name">Dimension 3 — Emotional, Behavioral, or Cognitive Conditions</div>
+          <div class="dim-desc">Co-occurring psychiatric symptoms or cognitive conditions affecting treatment response.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Psychiatric / Cognitive Severity</label>
+          <div class="severity-pills" id="dim3-sev-pills">
+            <button class="severity-pill" onclick="setSeverity('dim3','severity','none',this)">None / Stable</button>
+            <button class="severity-pill" onclick="setSeverity('dim3','severity','mild',this)">Mild</button>
+            <button class="severity-pill" onclick="setSeverity('dim3','severity','moderate',this)">Moderate</button>
+            <button class="severity-pill" onclick="setSeverity('dim3','severity','severe',this)">Severe</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Psychiatric Diagnoses</label>
+          <input class="form-input" placeholder="e.g. MDD, PTSD, Bipolar I, GAD, Schizoaffective Disorder…" oninput="state.dim3.diagnoses=this.value">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Active Symptoms</label>
+          <div id="dim3-symptoms" class="checkbox-group"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">How Symptoms Impair Treatment Engagement or Safety</label>
+          <textarea class="form-textarea" placeholder="Describe how psychiatric symptoms limit the client's ability to safely engage in, retain benefit from, or remain stable in a less intensive setting…" oninput="state.dim3.impact=this.value"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Additional Clinical Observations</label>
+          <textarea class="form-textarea" placeholder="Other relevant psychiatric or cognitive observations…" oninput="state.dim3.notes=this.value"></textarea>
+        </div>
+
+        <div class="continued-section" id="dim3-cs" style="display:none">
+          <div class="continued-section-title">Continued Stay — Dimension 3</div>
+          <div class="form-group">
+            <label class="form-label">Current Psychiatric Status</label>
+            <select class="form-select" onchange="state.dim3.csStatus=this.value">
+              <option value="">— Select —</option>
+              <option value="unstable">Symptoms remain clinically significant and unstable</option>
+              <option value="stabilizing">Stabilizing; continued clinical support required</option>
+              <option value="improved_not_ready">Improvement noted; not yet ready for step-down</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Remaining Psychiatric Treatment Goals</label>
+            <textarea class="form-textarea" placeholder="What psychiatric goals remain? Why is continued level of care necessary?" oninput="state.dim3.csGoals=this.value"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DIM 4 ── -->
+      <div class="dim-panel" id="dim-4">
+        <div class="dim-header">
+          <div id="dim4-badge"></div>
+          <div class="dim-name">Dimension 4 — Readiness to Change</div>
+          <div class="dim-desc">Client's motivation, insight, and engagement with the recovery process.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Stage of Change</label>
+          <select class="form-select" onchange="state.dim4.stage=this.value">
+            <option value="">— Select —</option>
+            <option value="precontemplation">Precontemplation — Does not acknowledge a substance use problem</option>
+            <option value="contemplation">Contemplation — Ambivalent; partial acknowledgment</option>
+            <option value="preparation">Preparation — Acknowledges problem; beginning to plan for change</option>
+            <option value="action">Action — Actively engaged in recovery efforts</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Insight into Substance Use Disorder</label>
+          <div class="severity-pills" id="dim4-insight-pills">
+            <button class="severity-pill" onclick="setSeverity('dim4','insight','poor',this)">Poor</button>
+            <button class="severity-pill" onclick="setSeverity('dim4','insight','fair',this)">Fair</button>
+            <button class="severity-pill" onclick="setSeverity('dim4','insight','good',this)">Good</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Treatment Engagement</label>
+          <select class="form-select" onchange="state.dim4.engagement=this.value">
+            <option value="">— Select —</option>
+            <option value="resistant">Resistant — Opposed to treatment participation</option>
+            <option value="ambivalent">Ambivalent — Variable, inconsistent engagement</option>
+            <option value="cooperative">Cooperative — Participating, primarily externally motivated</option>
+            <option value="motivated">Motivated — Internally driven, active in recovery work</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Engagement Barriers / Resistance Factors</label>
+          <textarea class="form-textarea" placeholder="Specific resistance, denial patterns, or barriers to engagement…" oninput="state.dim4.barriers=this.value"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Why This LOC Is Necessary for Engagement</label>
+          <textarea class="form-textarea" placeholder="What level of structure or clinical intervention does the client's readiness level require?" oninput="state.dim4.locRationale=this.value"></textarea>
+        </div>
+
+        <div class="continued-section" id="dim4-cs" style="display:none">
+          <div class="continued-section-title">Continued Stay — Dimension 4</div>
+          <div class="form-group">
+            <label class="form-label">Current Engagement Status</label>
+            <select class="form-select" onchange="state.dim4.csStatus=this.value">
+              <option value="">— Select —</option>
+              <option value="unchanged">Largely unchanged from admission; intensive intervention required</option>
+              <option value="improving">Improving but not sufficient for step-down</option>
+              <option value="inconsistent">Inconsistent; continued motivational structure required</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Remaining Readiness / Engagement Goals</label>
+            <textarea class="form-textarea" placeholder="What engagement or motivation goals remain? What would support safe step-down?" oninput="state.dim4.csGoals=this.value"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DIM 5 ── -->
+      <div class="dim-panel" id="dim-5">
+        <div class="dim-header">
+          <div id="dim5-badge"></div>
+          <div class="dim-name">Dimension 5 — Relapse, Continued Use, or Continued Problem Potential</div>
+          <div class="dim-desc">Likelihood of return to use or continued harmful behavior without this level of care.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Assessed Relapse Risk</label>
+          <div class="severity-pills" id="dim5-risk-pills">
+            <button class="severity-pill" onclick="setSeverity('dim5','risk','low',this)">Low</button>
+            <button class="severity-pill" onclick="setSeverity('dim5','risk','moderate',this)">Moderate</button>
+            <button class="severity-pill" onclick="setSeverity('dim5','risk','high',this)">High</button>
+            <button class="severity-pill" onclick="setSeverity('dim5','risk','imminent',this)">Imminent</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Prior Treatment Episodes</label>
+          <select class="form-select" onchange="state.dim5.priorTx=this.value">
+            <option value="">— Select —</option>
+            <option value="none">No prior treatment history</option>
+            <option value="one">1 prior episode</option>
+            <option value="two_three">2–3 prior episodes</option>
+            <option value="multiple">Multiple prior episodes (4+)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Identified Relapse Triggers</label>
+          <div id="dim5-triggers" class="checkbox-group"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Current Coping Skill Development</label>
+          <div class="severity-pills" id="dim5-coping-pills">
+            <button class="severity-pill" onclick="setSeverity('dim5','coping','poor',this)">Poor / Absent</button>
+            <button class="severity-pill" onclick="setSeverity('dim5','coping','developing',this)">Developing</button>
+            <button class="severity-pill" onclick="setSeverity('dim5','coping','adequate',this)">Adequate</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Additional Relapse Risk Factors</label>
+          <textarea class="form-textarea" placeholder="Overdose history, pattern of use escalation, harm reduction concerns, craving severity…" oninput="state.dim5.notes=this.value"></textarea>
+        </div>
+
+        <div class="continued-section" id="dim5-cs" style="display:none">
+          <div class="continued-section-title">Continued Stay — Dimension 5</div>
+          <div class="form-group">
+            <label class="form-label">Current Relapse Risk Status</label>
+            <select class="form-select" onchange="state.dim5.csStatus=this.value">
+              <option value="">— Select —</option>
+              <option value="unresolved">Risk remains high; would be substantially elevated by step-down</option>
+              <option value="improving">Risk decreasing; coping skills still insufficient for step-down</option>
+              <option value="setback">Relapse or near-relapse occurred during current episode of care</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Relapse Prevention Progress / Remaining Goals</label>
+            <textarea class="form-textarea" placeholder="What skills have been developed? What gaps remain? Why is step-down not yet appropriate?" oninput="state.dim5.csProgress=this.value"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DIM 6 ── -->
+      <div class="dim-panel" id="dim-6">
+        <div class="dim-header">
+          <div id="dim6-badge"></div>
+          <div class="dim-name">Dimension 6 — Recovery / Living Environment</div>
+          <div class="dim-desc">The client's home, social network, and community context and their impact on recovery.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Environmental Risk Level</label>
+          <div class="severity-pills" id="dim6-risk-pills">
+            <button class="severity-pill" onclick="setSeverity('dim6','envRisk','supportive',this)">Supportive</button>
+            <button class="severity-pill" onclick="setSeverity('dim6','envRisk','neutral',this)">Neutral</button>
+            <button class="severity-pill" onclick="setSeverity('dim6','envRisk','unsupportive',this)">Unsupportive</button>
+            <button class="severity-pill" onclick="setSeverity('dim6','envRisk','high_risk',this)">High Risk</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Current Living Situation</label>
+          <select class="form-select" onchange="state.dim6.living=this.value">
+            <option value="">— Select —</option>
+            <option value="stable">Stable housing (family home or independent)</option>
+            <option value="recovery_housing">Recovery / sober living housing</option>
+            <option value="unstable">Unstable / transitional housing</option>
+            <option value="homeless">Homeless / no fixed address</option>
+            <option value="active_users">Living with active substance users</option>
+            <option value="unsafe">Unsafe living environment</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Recovery Support System</label>
+          <select class="form-select" onchange="state.dim6.support=this.value">
+            <option value="">— Select —</option>
+            <option value="strong">Strong — Family/friends actively supportive of recovery</option>
+            <option value="limited">Limited — Some support present but insufficient</option>
+            <option value="absent">Absent — No meaningful support system</option>
+            <option value="using_peers">Primarily using peers — Social network consists of active users</option>
+            <option value="hostile">Hostile — Family/social network undermines recovery efforts</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Environmental Risk Factors</label>
+          <div id="dim6-risks" class="checkbox-group"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Additional Environmental Observations</label>
+          <textarea class="form-textarea" placeholder="Other contextual factors affecting the client's recovery environment…" oninput="state.dim6.notes=this.value"></textarea>
+        </div>
+
+        <div class="continued-section" id="dim6-cs" style="display:none">
+          <div class="continued-section-title">Continued Stay — Dimension 6</div>
+          <div class="form-group">
+            <label class="form-label">Current Environmental Status</label>
+            <select class="form-select" onchange="state.dim6.csStatus=this.value">
+              <option value="">— Select —</option>
+              <option value="unchanged">Environmental risks remain; safe discharge plan not yet established</option>
+              <option value="partial">Discharge planning in progress; transition not yet secured</option>
+              <option value="improved">Environment improved; client not yet ready for transition</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Discharge / Step-Down Planning Progress</label>
+            <textarea class="form-textarea" placeholder="What is the step-down plan? What environmental barriers remain?" oninput="state.dim6.csProgress=this.value"></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /dim-content -->
+  </div><!-- /left-panel -->
+
+  <!-- ── RIGHT: OUTPUT ── -->
+  <div class="right-panel">
+    <div class="output-toolbar">
+      <span class="output-toolbar-label">Generated Documentation</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="copy-feedback" id="copyFeedback">✓ Copied to clipboard</span>
+        <button class="btn btn-ghost" onclick="copyOutput()">Copy Text</button>
+      </div>
+    </div>
+
+    <div class="output-area">
+      <div class="output-placeholder" id="outputPlaceholder">
+        <div class="placeholder-icon">📋</div>
+        <div class="placeholder-text">
+          Select a Level of Care, complete the relevant dimension fields,<br>
+          and click <strong>Generate Documentation</strong> to produce your medical necessity narrative.
+        </div>
+      </div>
+
+      <div class="output-doc" id="outputDoc">
+        <div class="doc-header">
+          <div class="doc-title" id="outTitle"></div>
+          <div class="doc-meta" id="outMeta"></div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-section-title">Summary Statement</div>
+          <div class="doc-section-text" id="outSummary"></div>
+        </div>
+
+        <div class="doc-section" id="sec1" style="display:none">
+          <div class="doc-section-title">Dimension 1 — Acute Intoxication / Withdrawal Potential</div>
+          <div class="doc-section-text" id="outDim1"></div>
+        </div>
+
+        <div class="doc-section" id="sec2" style="display:none">
+          <div class="doc-section-title">Dimension 2 — Biomedical Conditions and Complications</div>
+          <div class="doc-section-text" id="outDim2"></div>
+        </div>
+
+        <div class="doc-section" id="sec3" style="display:none">
+          <div class="doc-section-title">Dimension 3 — Emotional, Behavioral, or Cognitive Conditions</div>
+          <div class="doc-section-text" id="outDim3"></div>
+        </div>
+
+        <div class="doc-section" id="sec4" style="display:none">
+          <div class="doc-section-title">Dimension 4 — Readiness to Change</div>
+          <div class="doc-section-text" id="outDim4"></div>
+        </div>
+
+        <div class="doc-section" id="sec5" style="display:none">
+          <div class="doc-section-title">Dimension 5 — Relapse, Continued Use, or Continued Problem Potential</div>
+          <div class="doc-section-text" id="outDim5"></div>
+        </div>
+
+        <div class="doc-section" id="sec6" style="display:none">
+          <div class="doc-section-title">Dimension 6 — Recovery / Living Environment</div>
+          <div class="doc-section-text" id="outDim6"></div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-section-title">Medical Necessity Determination</div>
+          <div class="doc-section-text" id="outDetermination"></div>
+        </div>
+      </div>
+    </div><!-- /output-area -->
+
+    <div class="generate-bar">
+      <span class="generate-bar-hint">Fields left blank will be omitted from the generated narrative.</span>
+      <button class="btn btn-primary" onclick="generate()">Generate Documentation</button>
+    </div>
+  </div>
+
+</div><!-- /main-layout -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// LOC CONFIGURATION
+// ═══════════════════════════════════════════════════
+const LOC_CONFIG = {
+  '1.0':  { name:'Outpatient Services (1.0)', full:'ASAM Level 1.0 Outpatient Services', primary:[4,5,6], stepDownTo:null },
+  '2.1':  { name:'Intensive Outpatient Program (2.1 IOP)', full:'ASAM Level 2.1 Intensive Outpatient Program', primary:[3,4,5,6], stepDownTo:'1.0' },
+  '2.5':  { name:'Partial Hospitalization Program (2.5 PHP)', full:'ASAM Level 2.5 Partial Hospitalization Program', primary:[3,4,5,6], stepDownTo:'2.1' },
+  '3.5':  { name:'Clinically Managed High-Intensity Residential (3.5)', full:'ASAM Level 3.5 Clinically Managed High-Intensity Residential', primary:[3,4,5,6], stepDownTo:'2.5' },
+  '3.7':  { name:'Medically Monitored Intensive Inpatient (3.7)', full:'ASAM Level 3.7 Medically Monitored Intensive Inpatient', primary:[1,2,3], stepDownTo:'3.5' },
+  '3.7WM':{ name:'Medically Monitored Withdrawal Management (3.7WM)', full:'ASAM Level 3.7WM Medically Monitored Withdrawal Management', primary:[1,2], stepDownTo:'3.5' },
+};
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+const state = {
+  loc: '', admissionType: 'initial', clientName: '', date: '',
+  dim1: { severity:'', substances:'', lastUse:'', ciwa:'', cows:'', symptoms:[], complicatedHistory:'', notes:'', csStatus:'', csProgress:'' },
+  dim2: { severity:'', conditions:'', impact:'', medications:'', notes:'', csStatus:'', csProgress:'' },
+  dim3: { severity:'', diagnoses:'', symptoms:[], impact:'', notes:'', csStatus:'', csGoals:'' },
+  dim4: { stage:'', insight:'', engagement:'', barriers:'', locRationale:'', csStatus:'', csGoals:'' },
+  dim5: { risk:'', priorTx:'', triggers:[], coping:'', notes:'', csStatus:'', csProgress:'' },
+  dim6: { envRisk:'', living:'', support:'', risks:[], notes:'', csStatus:'', csProgress:'' },
+};
+
+// ═══════════════════════════════════════════════════
+// CHECKBOX INIT
+// ═══════════════════════════════════════════════════
+function buildCheckboxes(containerId, dim, field, items) {
+  const el = document.getElementById(containerId);
+  items.forEach(item => {
+    const lbl = document.createElement('label');
+    lbl.className = 'checkbox-item';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = item;
+    cb.addEventListener('change', function() {
+      if (this.checked) { if (!state[dim][field].includes(item)) state[dim][field].push(item); }
+      else { state[dim][field] = state[dim][field].filter(v => v !== item); }
+    });
+    const sp = document.createElement('span'); sp.textContent = item;
+    lbl.appendChild(cb); lbl.appendChild(sp); el.appendChild(lbl);
+  });
+}
+
+buildCheckboxes('dim1-symptoms', 'dim1', 'symptoms', [
+  'Tremor / shakes','Diaphoresis (sweating)','Nausea / vomiting','Elevated heart rate or blood pressure',
+  'Anxiety / agitation','Insomnia','Headache','Muscle aches / cramps','Piloerection',
+  'Lacrimation / rhinorrhea','Seizure risk (current)','Hallucinations (auditory or visual)','Delirium tremens risk'
+]);
+
+buildCheckboxes('dim3-symptoms', 'dim3', 'symptoms', [
+  'Depressed mood / anhedonia','Anxiety / panic','PTSD symptoms / trauma responses',
+  'Passive suicidal ideation','Active suicidal ideation','Homicidal ideation',
+  'Auditory hallucinations','Visual hallucinations','Paranoia / persecutory beliefs',
+  'Mood instability / manic symptoms','Impulsivity / poor behavioral control',
+  'Cognitive impairment','Disorganized thinking','Dissociation'
+]);
+
+buildCheckboxes('dim5-triggers', 'dim5', 'triggers', [
+  'Social pressure / using peers','Environmental cues / drug-associated locations',
+  'Emotional dysregulation','Physical pain or discomfort','Boredom / lack of structure',
+  'Stress / life stressors','Trauma triggers','Interpersonal conflict',
+  'Availability of substances in environment','High craving intensity'
+]);
+
+buildCheckboxes('dim6-risks', 'dim6', 'risks', [
+  'Substances accessible in home environment','Active substance users in household',
+  'Proximity to drug markets or using locations','Domestic violence / unsafe relationships',
+  'Pending legal charges or active probation / parole','Financial instability or housing insecurity',
+  'Insufficient transportation for outpatient services','Limited access to recovery community resources'
+]);
+
+// ═══════════════════════════════════════════════════
+// UI HANDLERS
+// ═══════════════════════════════════════════════════
+function setSeverity(dim, field, value, el) {
+  state[dim][field] = value;
+  el.closest('.severity-pills').querySelectorAll('.severity-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function setAdmissionType(type) {
+  state.admissionType = type;
+  document.getElementById('btnInitial').classList.toggle('active', type === 'initial');
+  document.getElementById('btnContinued').classList.toggle('active', type === 'continued');
+  const show = type === 'continued';
+  [1,2,3,4,5,6].forEach(i => {
+    const el = document.getElementById(`dim${i}-cs`);
+    if (el) el.style.display = show ? 'block' : 'none';
+  });
+}
+
+function showDim(num, el) {
+  document.querySelectorAll('.dim-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.dim-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`dim-${num}`).classList.add('active');
+  el.classList.add('active');
+}
+
+document.getElementById('locSelect').addEventListener('change', function() {
+  state.loc = this.value;
+  document.getElementById('noLocOverlay').style.display = this.value ? 'none' : 'flex';
+  updateDimBadges();
+});
+
+document.getElementById('docDate').value = new Date().toISOString().split('T')[0];
+state.date = document.getElementById('docDate').value;
+document.getElementById('docDate').addEventListener('change', function() { state.date = this.value; });
+document.getElementById('clientName').addEventListener('input', function() { state.clientName = this.value; });
+
+function updateDimBadges() {
+  if (!state.loc) return;
+  const cfg = LOC_CONFIG[state.loc];
+  const shortName = state.loc;
+  document.querySelectorAll('.dim-tab').forEach(tab => {
+    const n = parseInt(tab.dataset.dim);
+    const isPrimary = cfg.primary.includes(n);
+    tab.classList.toggle('is-primary', isPrimary);
+    tab.innerHTML = isPrimary
+      ? `<span class="primary-dot"></span>Dim ${n}`
+      : `Dim ${n}`;
+  });
+  for (let i = 1; i <= 6; i++) {
+    const b = document.getElementById(`dim${i}-badge`);
+    if (!b) continue;
+    b.innerHTML = cfg.primary.includes(i)
+      ? `<div class="primary-badge">★ Primary Driver — ${shortName}</div>`
+      : '';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// TEXT HELPERS
+// ═══════════════════════════════════════════════════
+const C = () => state.clientName || 'Client';
+
+function list(arr) {
+  if (!arr || !arr.length) return '';
+  if (arr.length === 1) return arr[0].toLowerCase();
+  return arr.slice(0,-1).map(s=>s.toLowerCase()).join(', ') + ', and ' + arr[arr.length-1].toLowerCase();
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const [y,m,day] = d.split('-');
+  const mo = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return `${mo[+m-1]} ${+day}, ${y}`;
+}
+
+// ═══════════════════════════════════════════════════
+// DIMENSION GENERATORS
+// ═══════════════════════════════════════════════════
+function genDim1() {
+  const d = state.dim1, loc = state.loc, type = state.admissionType;
+  const hasContent = d.severity || d.substances || d.symptoms.length || d.ciwa || d.cows || d.complicatedHistory || d.notes;
+  if (!hasContent) return null;
+
+  let p = [];
+
+  if (d.severity === 'none') {
+    p.push(`${C()} does not present with clinically significant acute intoxication or withdrawal at this time.`);
+    if (d.substances) p.push(`History of ${d.substances} use is noted.`);
+  } else {
+    const sevPhrase = { mild:'mild', moderate:'moderate', severe:'severe and clinically significant' };
+    if (d.substances && d.severity) {
+      p.push(`${C()} presents with ${sevPhrase[d.severity]||d.severity} withdrawal potential related to ${d.substances} use.`);
+    } else if (d.substances) {
+      p.push(`${C()} presents with a history of ${d.substances} use.`);
+    } else if (d.severity) {
+      p.push(`${C()} presents with ${sevPhrase[d.severity]||d.severity} withdrawal potential.`);
+    }
+  }
+
+  if (d.lastUse) p.push(`Last use was reported as ${d.lastUse}.`);
+
+  if (d.ciwa) {
+    const lvl = +d.ciwa >= 15 ? 'severe' : +d.ciwa >= 8 ? 'moderate' : 'mild';
+    p.push(`CIWA-Ar score of ${d.ciwa} is consistent with ${lvl} alcohol withdrawal severity.`);
+  }
+  if (d.cows) {
+    const lvl = +d.cows >= 25 ? 'severe' : +d.cows >= 13 ? 'moderate' : +d.cows >= 5 ? 'mild to moderate' : 'minimal';
+    p.push(`COWS score of ${d.cows} reflects ${lvl} opioid withdrawal severity.`);
+  }
+
+  if (d.symptoms.length) p.push(`Active withdrawal symptoms include ${list(d.symptoms)}.`);
+
+  const histMap = {
+    seizure: 'a prior history of withdrawal-related seizure(s), substantially elevating current medical risk',
+    dt: 'a prior history of delirium tremens, indicating heightened risk for severe withdrawal complications',
+    hospitalization: 'prior hospitalization for medically complicated withdrawal',
+    multiple: 'a history of multiple complicated withdrawal episodes, including seizures and/or delirium tremens',
+  };
+  if (d.complicatedHistory && histMap[d.complicatedHistory]) {
+    p.push(`${C()} reports ${histMap[d.complicatedHistory]}.`);
+  }
+
+  if (d.notes) p.push(d.notes);
+
+  if (loc === '3.7WM') {
+    p.push(`The above presentation supports the need for 24-hour medically monitored withdrawal management. The severity and complexity of ${C()}'s withdrawal profile cannot be safely managed at a lower level of care without direct physician oversight and intervention capacity.`);
+  } else if (loc === '3.7') {
+    if (d.severity && d.severity !== 'none') {
+      p.push(`The withdrawal risk and associated monitoring needs presented here contribute to the need for medically monitored inpatient-level services, as lower levels of care do not provide the clinical oversight required to ensure medical safety.`);
+    }
+  } else if (['3.5','2.5','2.1','1.0'].includes(loc) && d.severity === 'none') {
+    p.push(`${C()}'s withdrawal risk has been clinically assessed and determined appropriate for the current level of care.`);
+  }
+
+  if (type === 'continued') {
+    const sm = {
+      ongoing: `${C()}'s withdrawal remains active and has not yet fully resolved. Continued 24-hour medical monitoring is clinically necessary to ensure safety.`,
+      stabilizing: `${C()}'s withdrawal is stabilizing; however, continued medical monitoring is required to manage potential re-emergence of symptoms and ensure a safe transition.`,
+      resolved_risk: `Acute withdrawal has resolved; however, the medical risk profile associated with ${C()}'s withdrawal history continues to support the need for the current level of care.`,
+      resolved: `Withdrawal has been successfully managed and is no longer a primary driver for continued stay at this level.`,
+    };
+    if (d.csStatus && sm[d.csStatus]) p.push(sm[d.csStatus]);
+    if (d.csProgress) p.push(d.csProgress);
+  }
+
+  return p.filter(Boolean).join(' ');
+}
+
+function genDim2() {
+  const d = state.dim2, loc = state.loc, type = state.admissionType;
+  const hasContent = d.severity || d.conditions || d.impact || d.medications || d.notes;
+  if (!hasContent) return null;
+
+  let p = [];
+
+  if (d.severity === 'none') {
+    p.push(`${C()} does not present with significant biomedical conditions that complicate addiction treatment at this time.`);
+  } else if (d.conditions) {
+    const sevPhrase = { low:'low-acuity', moderate:'moderate', high:'significant' };
+    p.push(`${C()} presents with the following active biomedical conditions requiring clinical consideration: ${d.conditions}.`);
+  } else if (d.severity) {
+    p.push(`${C()} presents with biomedical conditions of ${d.severity} clinical complexity.`);
+  }
+
+  if (d.impact) {
+    p.push(d.impact);
+  } else if (d.severity && d.severity !== 'none') {
+    if (['3.7','3.7WM'].includes(loc)) {
+      p.push(`These medical conditions require monitoring and intervention capacity beyond what is available in residential or outpatient settings.`);
+    } else if (['3.5','2.5'].includes(loc)) {
+      p.push(`These conditions require coordinated medical management integrated within an intensive addiction treatment setting.`);
+    }
+  }
+
+  if (d.medications) p.push(`Current medical management requiring clinical oversight includes: ${d.medications}.`);
+  if (d.notes) p.push(d.notes);
+
+  if (type === 'continued') {
+    const sm = {
+      unresolved: `${C()}'s biomedical conditions remain active and require ongoing monitoring and management consistent with the current level of care.`,
+      improving: `${C()}'s medical status is improving with treatment; however, continued clinical oversight is required before a safe step-down can be initiated.`,
+      stable: `${C()}'s biomedical conditions are currently stable and are not functioning as a primary driver for continued stay at this level.`,
+    };
+    if (d.csStatus && sm[d.csStatus]) p.push(sm[d.csStatus]);
+    if (d.csProgress) p.push(d.csProgress);
+  }
+
+  return p.filter(Boolean).join(' ');
+}
+
+function genDim3() {
+  const d = state.dim3, loc = state.loc, type = state.admissionType;
+  const hasContent = d.severity || d.diagnoses || d.symptoms.length || d.impact || d.notes;
+  if (!hasContent) return null;
+
+  let p = [];
+
+  if (d.severity === 'none') {
+    p.push(`${C()} does not present with significant emotional, behavioral, or cognitive conditions requiring elevated clinical intervention at this time.`);
+    if (d.diagnoses) p.push(`Psychiatric diagnoses of ${d.diagnoses} are noted and are currently stable.`);
+  } else {
+    const sevPhrase = { mild:'mild to moderate', moderate:'moderate', severe:'significant and clinically impairing' };
+    if (d.diagnoses) {
+      p.push(`${C()} presents with ${sevPhrase[d.severity]||d.severity} emotional, behavioral, and/or cognitive conditions complicating recovery. Documented psychiatric diagnoses include: ${d.diagnoses}.`);
+    } else if (d.severity) {
+      p.push(`${C()} presents with ${sevPhrase[d.severity]||d.severity} emotional, behavioral, and/or cognitive conditions with direct bearing on treatment planning.`);
+    }
+  }
+
+  if (d.symptoms.length) {
+    p.push(`Current active symptoms include ${list(d.symptoms)}.`);
+    const hasSI = d.symptoms.some(s => s.includes('suicidal'));
+    const hasHI = d.symptoms.includes('Homicidal ideation');
+    const hasPsych = d.symptoms.some(s => s.includes('hallucinations') || s.includes('Paranoia') || s.includes('Disorganized'));
+    if (hasSI || hasHI) {
+      p.push(`The presence of ${hasSI ? 'suicidal ideation' : ''}${hasSI && hasHI ? ' and ' : ''}${hasHI ? 'homicidal ideation' : ''} requires a level of safety monitoring and clinical intervention not available in less intensive settings.`);
+    }
+    if (hasPsych) {
+      p.push(`Active psychotic symptoms necessitate ongoing clinical assessment and psychiatric support consistent with this level of care.`);
+    }
+  }
+
+  if (d.impact) {
+    p.push(d.impact);
+  } else if (d.severity && d.severity !== 'none') {
+    if (['3.5','3.7'].includes(loc)) {
+      p.push(`The severity of ${C()}'s psychiatric presentation substantially impairs the capacity to apply recovery skills, sustain behavioral change, or maintain safety without the structure and continuous clinical oversight of a 24-hour treatment environment.`);
+    } else if (loc === '2.5') {
+      p.push(`The complexity of ${C()}'s psychiatric presentation requires daily therapeutic intervention and clinical monitoring beyond what weekly or biweekly outpatient contact can provide.`);
+    } else if (loc === '2.1') {
+      p.push(`${C()}'s psychiatric symptoms require more frequent and intensive therapeutic support than standard outpatient services can offer.`);
+    }
+  }
+
+  if (d.notes) p.push(d.notes);
+
+  if (type === 'continued') {
+    const sm = {
+      unstable: `${C()}'s psychiatric symptoms remain clinically significant and have not stabilized to a degree that would support a safe transition to a less intensive level of care.`,
+      stabilizing: `${C()}'s psychiatric status is showing improvement with treatment; however, continued clinical structure and support are required as stability is not yet adequately established.`,
+      improved_not_ready: `Symptom improvement has been noted during the current episode of care; however, ${C()} has not yet developed the coping capacity and behavioral stability necessary to safely engage in treatment at a reduced level of intensity.`,
+    };
+    if (d.csStatus && sm[d.csStatus]) p.push(sm[d.csStatus]);
+    if (d.csGoals) p.push(`Remaining psychiatric treatment goals include: ${d.csGoals}`);
+  }
+
+  return p.filter(Boolean).join(' ');
+}
+
+function genDim4() {
+  const d = state.dim4, loc = state.loc, type = state.admissionType;
+  const hasContent = d.stage || d.insight || d.engagement || d.barriers || d.locRationale;
+  if (!hasContent) return null;
+
+  let p = [];
+
+  const stageMap = {
+    precontemplation: `${C()} is in the precontemplation stage of change, presenting with limited to no acknowledgment of a substance use disorder and active resistance to treatment. Engagement at this time is primarily extrinsically motivated.`,
+    contemplation: `${C()} is in the contemplation stage, demonstrating ambivalence about the need for change. While some acknowledgment of the impact of substance use is present, the client remains inconsistently motivated to engage in and sustain recovery efforts.`,
+    preparation: `${C()} is in the preparation stage, acknowledging the presence of a substance use disorder and beginning to consider concrete steps toward change, though commitment to action is not yet fully established.`,
+    action: `${C()} is in the action stage of change, demonstrating active engagement with the recovery process and emerging intrinsic motivation to sustain change.`,
+  };
+  if (d.stage && stageMap[d.stage]) p.push(stageMap[d.stage]);
+
+  const insightMap = {
+    poor: `Insight into the nature and severity of the substance use disorder is poor.`,
+    fair: `Insight into the substance use disorder is fair, with partial acknowledgment of its consequences and limited capacity for self-directed recovery monitoring.`,
+    good: `${C()} demonstrates good insight into the nature of the substance use disorder and its impact on overall functioning.`,
+  };
+  if (d.insight && insightMap[d.insight]) p.push(insightMap[d.insight]);
+
+  const engagementMap = {
+    resistant: `Treatment engagement is poor. ${C()} is actively resistant to therapeutic intervention and requires intensive motivational work within a structured, containing environment to facilitate meaningful participation.`,
+    ambivalent: `Treatment engagement is inconsistent, characterized by ambivalence and variable participation. ${C()} requires a higher level of clinical structure to support consistent and productive engagement.`,
+    cooperative: `${C()} is cooperatively engaged in treatment, though motivation appears primarily extrinsic at this stage.`,
+    motivated: `${C()} demonstrates internally motivated engagement with treatment and active participation in assigned recovery programming.`,
+  };
+  if (d.engagement && engagementMap[d.engagement]) p.push(engagementMap[d.engagement]);
+
+  if (d.barriers) p.push(`Identified engagement barriers include: ${d.barriers}`);
+
+  if (d.locRationale) {
+    p.push(d.locRationale);
+  } else if (d.stage && ['precontemplation','contemplation'].includes(d.stage)) {
+    if (['3.5','3.7'].includes(loc)) {
+      p.push(`${C()}'s current stage of change and degree of insight indicate that a highly structured 24-hour residential setting is necessary to provide the ongoing motivational intervention, structured confrontation of denial, and environmental containment needed to sustain engagement with the recovery process.`);
+    } else if (loc === '2.5') {
+      p.push(`The frequency and intensity of PHP-level services are necessary to provide adequate motivational support and skill-building within a structured daily treatment framework appropriate to ${C()}'s current readiness level.`);
+    } else if (loc === '2.1') {
+      p.push(`The frequency of IOP-level services provides the motivational scaffolding and structured accountability that ${C()}'s current readiness level requires.`);
+    }
+  }
+
+  if (type === 'continued') {
+    const sm = {
+      unchanged: `${C()}'s readiness to change and overall treatment engagement remain largely consistent with the clinical presentation at admission. Intensive motivational intervention continues to be necessary.`,
+      improving: `${C()}'s engagement and readiness to change are showing positive development; however, the degree of progress is not yet sufficient to sustain recovery gains in a less intensive level of care.`,
+      inconsistent: `${C()}'s treatment engagement has been inconsistent throughout the current episode of care, reflecting ongoing ambivalence that requires continued intensive clinical structure and motivational support.`,
+    };
+    if (d.csStatus && sm[d.csStatus]) p.push(sm[d.csStatus]);
+    if (d.csGoals) p.push(`Remaining readiness and engagement goals: ${d.csGoals}`);
+  }
+
+  return p.filter(Boolean).join(' ');
+}
+
+function genDim5() {
+  const d = state.dim5, loc = state.loc, type = state.admissionType;
+  const hasContent = d.risk || d.priorTx || d.triggers.length || d.coping || d.notes;
+  if (!hasContent) return null;
+
+  let p = [];
+
+  const priorMap = {
+    none: `${C()} has no prior formal addiction treatment history.`,
+    one: `${C()} has one prior episode of addiction treatment.`,
+    two_three: `${C()} has a history of 2–3 prior treatment episodes, reflecting a pattern of recurrence that is clinically relevant to the current level of care determination.`,
+    multiple: `${C()} has a history of multiple prior treatment episodes, consistent with a chronic, relapsing illness course that underscores the need for intensive intervention.`,
+  };
+  if (d.priorTx && priorMap[d.priorTx]) p.push(priorMap[d.priorTx]);
+
+  const riskMap = {
+    low: `Current relapse risk is assessed as low, with adequate motivation, emerging coping skills, and a manageable trigger profile.`,
+    moderate: `Current relapse risk is assessed as moderate. Without the structure and clinical support of the current level of care, ${C()}'s risk of return to use would be substantially elevated.`,
+    high: `Current relapse risk is assessed as high. ${C()} presents with limited coping capacity, significant trigger exposure, and insufficient recovery supports to maintain abstinence at a lower level of care.`,
+    imminent: `Current relapse risk is assessed as imminent. The combination of limited coping skills, significant trigger exposure, and environmental risk creates a high near-term likelihood of return to use without intensive clinical containment.`,
+  };
+  if (d.risk && riskMap[d.risk]) p.push(riskMap[d.risk]);
+
+  if (d.triggers.length) p.push(`Identified relapse triggers include ${list(d.triggers)}.`);
+
+  const copingMap = {
+    poor: `${C()}'s repertoire of effective coping and relapse prevention skills is currently poor or absent, leaving the client highly vulnerable to trigger exposure without ongoing therapeutic support.`,
+    developing: `${C()} is in the early stages of developing coping and relapse prevention skills. These skills are not yet sufficiently consolidated to support sustained recovery in a less structured environment.`,
+    adequate: `${C()} has developed a foundational set of coping skills, though continued reinforcement and skill generalization are needed before step-down is appropriate.`,
+  };
+  if (d.coping && copingMap[d.coping]) p.push(copingMap[d.coping]);
+
+  if (d.notes) p.push(d.notes);
+
+  if (type === 'continued') {
+    const sm = {
+      unresolved: `${C()}'s relapse risk remains clinically significant and would be substantially elevated by a reduction in the current intensity of services.`,
+      improving: `${C()}'s relapse prevention skills are developing; however, the degree of consolidation is not yet sufficient to support sustained recovery at a less intensive level of care.`,
+      setback: `${C()} experienced a relapse or near-relapse incident during the current episode of care, underscoring the continued need for intensive clinical structure and targeted relapse prevention intervention.`,
+    };
+    if (d.csStatus && sm[d.csStatus]) p.push(sm[d.csStatus]);
+    if (d.csProgress) p.push(d.csProgress);
+  }
+
+  return p.filter(Boolean).join(' ');
+}
+
+function genDim6() {
+  const d = state.dim6, loc = state.loc, type = state.admissionType;
+  const hasContent = d.envRisk || d.living || d.support || d.risks.length || d.notes;
+  if (!hasContent) return null;
+
+  let p = [];
+
+  const livingMap = {
+    stable: `${C()}'s current living situation is stable.`,
+    recovery_housing: `${C()} has secured recovery/sober living housing, providing a structured, substance-free living environment to support the recovery process.`,
+    unstable: `${C()}'s housing situation is currently unstable, presenting a significant barrier to engaging in or benefiting from outpatient services.`,
+    homeless: `${C()} is currently without stable housing, which substantially undermines the capacity to engage in community-based treatment and sustain recovery.`,
+    active_users: `${C()}'s current living environment includes active substance users, creating a high-risk context that is incompatible with early recovery.`,
+    unsafe: `${C()}'s current living environment has been identified as clinically unsafe, precluding safe discharge to a less intensive level of care without an alternative plan.`,
+  };
+  if (d.living && livingMap[d.living]) p.push(livingMap[d.living]);
+
+  const supportMap = {
+    strong: `${C()} has a strong recovery support system, with family and/or social network members who are actively engaged in supporting the recovery process.`,
+    limited: `${C()}'s recovery support system is limited. While some social support is present, it is insufficient to sustain recovery without the structure of intensive treatment.`,
+    absent: `${C()} lacks a meaningful recovery support system, which significantly elevates relapse risk in less structured settings.`,
+    using_peers: `${C()}'s primary social network consists of individuals who are actively using substances, representing a significant environmental recovery risk.`,
+    hostile: `${C()}'s family and/or social network is actively unsupportive of or hostile toward recovery efforts, undermining treatment gains and community-based recovery.`,
+  };
+  if (d.support && supportMap[d.support]) p.push(supportMap[d.support]);
+
+  if (d.risks.length) p.push(`Environmental risk factors identified include ${list(d.risks)}.`);
+
+  // LOC-specific environmental framing
+  if (['3.5','3.7','3.7WM'].includes(loc)) {
+    const highRisk = ['homeless','active_users','unsafe','unstable'].includes(d.living) || ['absent','using_peers','hostile'].includes(d.support);
+    if (highRisk) {
+      p.push(`The current recovery environment presents barriers that make community-based treatment untenable at this time. A 24-hour residential setting is necessary to provide a safe, substance-free therapeutic environment in which meaningful recovery work can occur.`);
+    }
+  } else if (['2.5','2.1'].includes(loc)) {
+    if (['absent','using_peers','hostile'].includes(d.support)) {
+      p.push(`The absence of adequate environmental support underscores the need for intensive daily structure to mitigate environmental relapse risk while ${C()} develops recovery capital and community connections.`);
+    }
+  }
+
+  if (d.notes) p.push(d.notes);
+
+  if (type === 'continued') {
+    const sm = {
+      unchanged: `${C()}'s recovery environment has not materially improved since admission. Environmental risk factors remain present, and a safe, supported step-down plan has not yet been established.`,
+      partial: `Discharge and step-down planning is actively in progress. While some environmental progress has been made, the transition to a less intensive level of care has not yet been clinically secured.`,
+      improved: `Environmental conditions have shown meaningful improvement; however, ${C()} has not yet developed the recovery skills and community supports necessary to sustain treatment gains without the current level of clinical structure.`,
+    };
+    if (d.csStatus && sm[d.csStatus]) p.push(sm[d.csStatus]);
+    if (d.csProgress) p.push(d.csProgress);
+  }
+
+  return p.filter(Boolean).join(' ');
+}
+
+function genSummary(dims) {
+  const C_ = C(), cfg = LOC_CONFIG[state.loc], type = state.admissionType;
+  const names = [];
+  const dNames = ['Dimension 1 (Withdrawal/Intoxication)','Dimension 2 (Biomedical)','Dimension 3 (Psychiatric/Behavioral)','Dimension 4 (Readiness to Change)','Dimension 5 (Relapse Risk)','Dimension 6 (Recovery Environment)'];
+  dims.forEach((d,i) => { if (d) names.push(dNames[i]); });
+
+  if (type === 'initial') {
+    return `${C_} meets medical necessity criteria for ${cfg.full} based on clinical need across the following ASAM dimensions: ${names.join('; ')}. The clinical presentation documented below supports this level of care as the most appropriate and least restrictive setting capable of safely and effectively addressing ${C_}'s current treatment needs.`;
+  } else {
+    return `${C_} continues to meet medical necessity criteria for ${cfg.full}. The clinical indicators documented below support continued authorization at this level of care. A step-down to a less intensive setting is not clinically appropriate at this time.`;
+  }
+}
+
+function genDetermination() {
+  const C_ = C(), cfg = LOC_CONFIG[state.loc], type = state.admissionType;
+  const stepDown = cfg.stepDownTo ? LOC_CONFIG[cfg.stepDownTo]?.name : null;
+
+  if (type === 'initial') {
+    let t = `${cfg.full} represents the least restrictive level of care that can safely and effectively address ${C_}'s presenting clinical needs at this time. `;
+    if (stepDown) {
+      t += `A lower level of care (${stepDown}) would be insufficient to address the severity and complexity of the presenting clinical picture as documented across the relevant ASAM dimensions above. `;
+    }
+    t += `Treatment at this level of care is medically necessary and clinically indicated to achieve the stabilization, skill development, and recovery capital required for ${C_} to safely transition to a less intensive level of care.`;
+    return t;
+  } else {
+    const sdName = stepDown || 'a less intensive level of care';
+    return `${C_} continues to require the clinical intensity of ${cfg.full}. Step-down to ${sdName} is not clinically appropriate at this time, as ${C_} has not yet achieved sufficient stabilization, skill development, or environmental readiness to sustain recovery gains in a less intensive setting. Continued authorization at this level of care is medically necessary and consistent with evidence-based standards for the treatment of substance use disorder.`;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// MAIN GENERATE
+// ═══════════════════════════════════════════════════
+function generate() {
+  if (!state.loc) { alert('Please select a Level of Care before generating.'); return; }
+
+  const cfg = LOC_CONFIG[state.loc];
+  const d1 = genDim1(), d2 = genDim2(), d3 = genDim3(), d4 = genDim4(), d5 = genDim5(), d6 = genDim6();
+  const dims = [d1,d2,d3,d4,d5,d6];
+
+  // Header
+  document.getElementById('outTitle').textContent = `Medical Necessity Documentation — ${cfg.name}`;
+
+  const metaItems = [];
+  if (state.clientName) metaItems.push(state.clientName);
+  if (state.date) metaItems.push(fmtDate(state.date));
+  metaItems.push(state.admissionType === 'initial' ? 'Initial Admission' : 'Continued Stay');
+
+  const metaEl = document.getElementById('outMeta');
+  metaEl.innerHTML = metaItems.map(t => `<span>${t}</span>`).join('');
+
+  document.getElementById('outSummary').textContent = genSummary(dims);
+
+  const secMap = [[d1,'sec1','outDim1'],[d2,'sec2','outDim2'],[d3,'sec3','outDim3'],[d4,'sec4','outDim4'],[d5,'sec5','outDim5'],[d6,'sec6','outDim6']];
+  secMap.forEach(([text, secId, textId]) => {
+    const sec = document.getElementById(secId);
+    const el = document.getElementById(textId);
+    if (text) { sec.style.display='block'; el.textContent=text; }
+    else { sec.style.display='none'; }
+  });
+
+  document.getElementById('outDetermination').textContent = genDetermination();
+
+  document.getElementById('outputPlaceholder').style.display = 'none';
+  document.getElementById('outputDoc').classList.add('visible');
+}
+
+// ═══════════════════════════════════════════════════
+// COPY
+// ═══════════════════════════════════════════════════
+function copyOutput() {
+  const doc = document.getElementById('outputDoc');
+  if (!doc.classList.contains('visible')) return;
+
+  const title = document.getElementById('outTitle').textContent;
+  const metaSpans = document.getElementById('outMeta').querySelectorAll('span');
+  const meta = Array.from(metaSpans).map(s=>s.textContent).join(' | ');
+
+  const sections = [
+    { label:'SUMMARY STATEMENT', id:'outSummary', secId:null },
+    { label:'DIMENSION 1 — ACUTE INTOXICATION / WITHDRAWAL POTENTIAL', id:'outDim1', secId:'sec1' },
+    { label:'DIMENSION 2 — BIOMEDICAL CONDITIONS AND COMPLICATIONS', id:'outDim2', secId:'sec2' },
+    { label:'DIMENSION 3 — EMOTIONAL, BEHAVIORAL, OR COGNITIVE CONDITIONS', id:'outDim3', secId:'sec3' },
+    { label:'DIMENSION 4 — READINESS TO CHANGE', id:'outDim4', secId:'sec4' },
+    { label:'DIMENSION 5 — RELAPSE, CONTINUED USE, OR CONTINUED PROBLEM POTENTIAL', id:'outDim5', secId:'sec5' },
+    { label:'DIMENSION 6 — RECOVERY / LIVING ENVIRONMENT', id:'outDim6', secId:'sec6' },
+    { label:'MEDICAL NECESSITY DETERMINATION', id:'outDetermination', secId:null },
+  ];
+
+  let text = `${title}\n${meta}\n\n`;
+  sections.forEach(s => {
+    if (s.secId && document.getElementById(s.secId).style.display === 'none') return;
+    const content = document.getElementById(s.id).textContent;
+    if (content) text += `${s.label}\n${content}\n\n`;
+  });
+
+  navigator.clipboard.writeText(text.trim()).then(() => {
+    const fb = document.getElementById('copyFeedback');
+    fb.classList.add('show');
+    setTimeout(() => fb.classList.remove('show'), 2500);
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = text.trim(); ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+</script>
+</body>
+</html>
