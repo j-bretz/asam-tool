@@ -473,6 +473,99 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
 }
 .generate-bar-hint { font-size: 11px; color: var(--text-secondary); }
 
+/* ─── REMARKABLE CRITERIA ─────────────────── */
+.criteria-block {
+  display: none;
+  margin-top: 28px;
+  border-top: 2px dashed var(--border);
+  padding-top: 22px;
+  max-width: 660px;
+}
+.criteria-block.visible { display: block; }
+.criteria-block-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+.criteria-block-titles { flex: 1; }
+.criteria-block-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.criteria-block-subtitle {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 3px;
+  line-height: 1.5;
+}
+.criteria-dim {
+  margin-bottom: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.criteria-dim-header {
+  background: var(--bg);
+  padding: 7px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+}
+.criteria-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.criteria-item:last-child { border-bottom: none; }
+.criteria-item:hover { background: var(--bg); }
+.criteria-item input[type="checkbox"] {
+  accent-color: var(--accent);
+  margin-top: 2px;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+.criteria-letter {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.criteria-text {
+  font-size: 12px;
+  line-height: 1.45;
+  flex: 1;
+}
+.criteria-item.suggested .criteria-text { color: var(--text); }
+.criteria-item:not(.suggested) .criteria-text { color: var(--text-secondary); }
+.criteria-tag {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary-badge);
+  background: var(--primary-badge-bg);
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 .copy-feedback {
   font-size: 11px;
   color: var(--primary-badge);
@@ -1120,6 +1213,18 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
           <div class="doc-section-text" id="outDetermination"></div>
         </div>
+      </div><!-- /output-doc -->
+
+      <!-- REMARKABLE CRITERIA BLOCK -->
+      <div class="criteria-block" id="criteriaBlock">
+        <div class="criteria-block-header">
+          <div class="criteria-block-titles">
+            <div class="criteria-block-title">Remarkable Criteria Checklist</div>
+            <div class="criteria-block-subtitle">Suggested criteria are pre-checked based on your inputs. Review and adjust, then copy the summary to reference while selecting in Remarkable.</div>
+          </div>
+          <button class="btn btn-ghost" onclick="copyCriteria(this)" style="flex-shrink:0">Copy Summary</button>
+        </div>
+        <div id="criteriaContent"></div>
       </div>
     </div><!-- /output-area -->
 
@@ -1143,6 +1248,277 @@ const LOC_CONFIG = {
   '3.7':  { name:'Medically Monitored Intensive Inpatient (3.7)', full:'ASAM Level 3.7 Medically Monitored Intensive Inpatient', primary:[1,2,3], stepDownTo:'3.5' },
   '3.7WM':{ name:'Medically Monitored Withdrawal Management (3.7WM)', full:'ASAM Level 3.7WM Medically Monitored Withdrawal Management', primary:[1,2], stepDownTo:'3.5' },
 };
+
+// ═══════════════════════════════════════════════════
+// REMARKABLE CRITERIA MAP
+// Each entry: { letter, text, auto: fn(state) → bool }
+// ═══════════════════════════════════════════════════
+const CRITERIA_MAP = {
+  '3.7WM': {
+    1: [
+      { letter:'a', text:'Hourly monitoring until improvement begins, then every 2–3 hours', auto: s => ['moderate','severe'].includes(s.dim1.severity) },
+      { letter:'b', text:'Implementation of Sx-triggered WD management protocol using long-acting opioids/non-opioids', auto: s => s.dim1.severity && s.dim1.severity !== 'none' },
+      { letter:'c', text:'Intoxicated or is withdrawing', auto: s => s.dim1.symptoms.length > 0 || ['moderate','severe'].includes(s.dim1.severity) },
+      { letter:'d', text:'CIWA/CSSA/AWAS assessment performed every 4 hours', auto: s => !!(s.dim1.ciwa || s.dim1.cows) },
+      { letter:'e', text:'Severe withdrawal requiring 24-hour nursing care', auto: s => s.dim1.severity === 'severe' },
+    ],
+    2: [
+      { letter:'a', text:'Biomedical conditions & continued use places significant risk of serious damage to health', auto: s => s.dim2.severity === 'high' },
+      { letter:'b', text:'Biomedical condition requires 24-hour nursing & medical monitoring but not at a higher LOC', auto: s => ['moderate','high'].includes(s.dim2.severity) },
+    ],
+    3: [
+      { letter:'a', text:'Emotional/Behavioral/Cognitive conditions require 24-hour medically monitored setting', auto: s => ['moderate','severe'].includes(s.dim3.severity) },
+    ],
+    4: [
+      { letter:'a', text:'Despite serious issues will not accept/relate addictive disorder to severity of the problem', auto: s => s.dim4.stage === 'precontemplation' },
+      { letter:'b', text:'Needs intensive motivating strategies available only in a 24-hour medically monitored setting', auto: s => ['resistant','ambivalent'].includes(s.dim4.engagement) },
+      { letter:'c', text:'Needs ongoing psychiatric monitoring to follow through with treatment regimen', auto: s => ['moderate','severe'].includes(s.dim3.severity) },
+    ],
+    5: [
+      { letter:'a', text:'Acute psychiatric/SUD crisis posing threat to self or others without 24-hour monitoring', auto: s => s.dim3.symptoms.includes('Active suicidal ideation') || s.dim3.symptoms.includes('Homicidal ideation') },
+      { letter:'b', text:'Escalation of relapse behavior/acute symptoms requiring 24-hour monitoring due to threat of harm to self/others', auto: s => s.dim5.risk === 'imminent' },
+      { letter:'c', text:'Modality requires safe & effective medically monitored protocols in managed care', auto: s => s.dim1.severity === 'severe' },
+    ],
+    6: [
+      { letter:'a', text:'Needs continuous medical monitoring due to high risk living situations', auto: s => ['unsafe','homeless'].includes(s.dim6.living) },
+      { letter:'b', text:'Living environment is not conducive to recovery goals & jeopardizes recovery efforts', auto: s => ['active_users','unsafe','unstable','homeless'].includes(s.dim6.living) || ['using_peers','hostile'].includes(s.dim6.support) },
+      { letter:'c', text:'Inability to cope for even limited periods outside of 24-hour care', auto: s => s.dim6.envRisk === 'high_risk' },
+    ],
+  },
+  '3.7': {
+    1: [
+      { letter:'a', text:'See 3.7WM withdrawal management criteria', auto: s => s.dim1.severity && s.dim1.severity !== 'none' },
+    ],
+    2: [
+      { letter:'a', text:'Biomedical conditions & continued use places significant risk of serious damage to health', auto: s => s.dim2.severity === 'high' },
+      { letter:'b', text:'Biomedical condition requires 24-hour nursing & medical monitoring but not a higher LOC', auto: s => ['moderate','high'].includes(s.dim2.severity) },
+    ],
+    3: [
+      { letter:'a', text:'Emotional/Behavioral/Cognitive conditions require 24-hour medically monitored setting', auto: s => ['moderate','severe'].includes(s.dim3.severity) },
+    ],
+    4: [
+      { letter:'a', text:'Despite serious issues will not accept/relate addictive disorder to severity of the problem', auto: s => s.dim4.stage === 'precontemplation' },
+      { letter:'b', text:'Needs intensive motivational strategies available only in a 24-hour medically monitored setting', auto: s => ['resistant','ambivalent'].includes(s.dim4.engagement) },
+      { letter:'c', text:'Needs ongoing psychiatric monitoring to follow through with treatment regimen', auto: s => ['moderate','severe'].includes(s.dim3.severity) },
+    ],
+    5: [
+      { letter:'a', text:'Acute psychiatric/SUD crisis posing threat to self or others without 24-hour monitoring', auto: s => s.dim3.symptoms.includes('Active suicidal ideation') || s.dim3.symptoms.includes('Homicidal ideation') },
+      { letter:'b', text:'Escalation of relapse behavior/acute symptoms requiring 24-hour monitoring due to threat of harm to self/others', auto: s => s.dim5.risk === 'imminent' },
+      { letter:'c', text:'Modality requires safe & effective medically monitored protocols in managed care', auto: s => ['moderate','severe'].includes(s.dim1.severity) },
+    ],
+    6: [
+      { letter:'a', text:'Needs continuous medical monitoring due to high risk living situations', auto: s => ['unsafe','homeless'].includes(s.dim6.living) },
+      { letter:'b', text:'Living environment is not conducive to recovery goals & jeopardizes recovery efforts', auto: s => ['active_users','unsafe','unstable','homeless'].includes(s.dim6.living) || ['using_peers','hostile'].includes(s.dim6.support) },
+      { letter:'c', text:'Inability to cope for even limited periods outside of 24-hour care', auto: s => s.dim6.envRisk === 'high_risk' },
+    ],
+  },
+  '3.5': {
+    1: [
+      { letter:'a', text:'No signs or symptoms of WD, or WD needs can be safely managed in this level 3.5 setting', auto: s => !s.dim1.severity || s.dim1.severity === 'none' || s.dim1.severity === 'mild' },
+    ],
+    2: [
+      { letter:'a', text:'Biomedical conditions are stable or being addressed & do not interfere with treatment', auto: s => ['none','low'].includes(s.dim2.severity) },
+      { letter:'b', text:'Biomedical condition is not severe enough for inpatient treatment but sufficient to distract treatment efforts', auto: s => s.dim2.severity === 'moderate' },
+    ],
+    3: [
+      { letter:'a', text:'Emotional/Behavioral/Cognitive conditions do not interfere with treatment', auto: s => ['none','mild'].includes(s.dim3.severity) },
+    ],
+    4: [
+      { letter:'a', text:'Because of intensity/chronicity, has limited insight; requires treatment; limited readiness to change', auto: s => s.dim4.insight === 'poor' },
+      { letter:'b', text:'Difficulty understanding relationship due to SUD & decline in domains of life', auto: s => ['precontemplation','contemplation'].includes(s.dim4.stage) },
+      { letter:'c', text:'Despite serious consequences, does not recognize the need for treatment', auto: s => s.dim4.stage === 'precontemplation' },
+      { letter:'d', text:'Requires structured 24-hour programming to promote treatment progress due to failure at lower LOC', auto: s => ['two_three','multiple'].includes(s.dim5.priorTx) },
+      { letter:'e', text:'Perspective impairs ability to make behavioral changes without clinically motivational interventions', auto: s => ['resistant','ambivalent'].includes(s.dim4.engagement) },
+      { letter:'f', text:'Despite recognition of SUD problems, expresses little/no interest in changing', auto: s => s.dim4.engagement === 'resistant' },
+      { letter:'g', text:'Poor insight requires clinically directed motivational interventions to enable insight on SUD problems', auto: s => s.dim4.insight === 'poor' },
+    ],
+    5: [
+      { letter:'a', text:'Does not recognize relapse triggers & lacks insight into benefits of treatment', auto: s => s.dim5.coping === 'poor' },
+      { letter:'b', text:'Inability to control SUD, limited ability to interrupt relapse process, or utilize support', auto: s => ['high','imminent'].includes(s.dim5.risk) },
+      { letter:'c', text:'Experiencing cravings & unable to postpone immediate gratification & drug seeking behavior', auto: s => s.dim5.triggers.includes('High craving intensity') },
+      { letter:'d', text:'Imminent danger of relapsing/continued use with severe emotional, behavioral, or cognitive consequences', auto: s => s.dim5.risk === 'imminent' },
+      { letter:'e', text:'Repeated failure at a lower LOC', auto: s => ['two_three','multiple'].includes(s.dim5.priorTx) },
+      { letter:'f', text:'Demonstrates repeated history of incarceration with pattern of relapse due to SUD', auto: s => false },
+    ],
+    6: [
+      { letter:'a', text:'Living environment characterized by moderately high risk of neglect', auto: s => ['unstable','unsafe'].includes(s.dim6.living) },
+      { letter:'b', text:'Social network includes regular AOD users', auto: s => s.dim6.living === 'active_users' || s.dim6.support === 'using_peers' },
+      { letter:'c', text:'Social networks characterized by significant social isolation or withdrawal', auto: s => s.dim6.support === 'absent' },
+      { letter:'d', text:'Social networks involve living with regular users/drug dealers & goals are unachievable', auto: s => s.dim6.living === 'active_users' && ['using_peers','hostile'].includes(s.dim6.support) },
+      { letter:'e', text:'Inability to cope for even limited periods of time outside of 24-hour care', auto: s => s.dim6.envRisk === 'high_risk' },
+    ],
+  },
+  '2.5': {
+    1: [
+      { letter:'a', text:'No signs or symptoms of WD, or WD needs can be safely managed in level 2.5 setting', auto: s => !s.dim1.severity || s.dim1.severity === 'none' },
+    ],
+    2: [
+      { letter:'a', text:'Biomedical conditions, if any, not severe enough to interfere with treatment but distract from recovery', auto: s => ['low','moderate'].includes(s.dim2.severity) },
+      { letter:'b', text:'Biomedical conditions are stable or can be addressed at level 2.5 & do not interfere with treatment', auto: s => ['none','low'].includes(s.dim2.severity) },
+    ],
+    3: [
+      { letter:'a', text:'Emotional/Behavioral/Cognitive conditions do not interfere with treatment', auto: s => ['none','mild'].includes(s.dim3.severity) },
+    ],
+    4: [
+      { letter:'a', text:'Requires structured therapy to promote treatment progress due to failure at lower LOC', auto: s => ['two_three','multiple'].includes(s.dim5.priorTx) },
+      { letter:'b', text:'Perspective inhibits ability to make behavioral changes without structured motivation interventions', auto: s => ['resistant','ambivalent'].includes(s.dim4.engagement) },
+      { letter:'c', text:'Inability to control SUD, limited ability to interrupt relapse process, or utilize support without structured interventions', auto: s => ['high','imminent'].includes(s.dim5.risk) },
+    ],
+    5: [
+      { letter:'a', text:'Does not recognize relapse triggers & lacks insight into benefits of treatment', auto: s => s.dim5.coping === 'poor' },
+      { letter:'b', text:'Inability to control SUD, limited ability to interrupt relapse process without structured interventions', auto: s => ['high','imminent'].includes(s.dim5.risk) },
+      { letter:'c', text:'Experiencing cravings & unable to postpone immediate gratification & drug seeking behavior', auto: s => s.dim5.triggers.includes('High craving intensity') },
+      { letter:'d', text:'Imminent danger of relapsing/continued use with severe emotional, behavioral, or cognitive consequences', auto: s => s.dim5.risk === 'imminent' },
+      { letter:'e', text:'Repeated failure at a lower LOC', auto: s => ['two_three','multiple'].includes(s.dim5.priorTx) },
+    ],
+    6: [
+      { letter:'a', text:'Exposure to current school, work, or living environment will interfere with recovery efforts', auto: s => ['active_users','unsafe','unstable'].includes(s.dim6.living) },
+      { letter:'b', text:'Lacks the resources/skills to maintain adequate level of functioning', auto: s => s.dim6.support === 'absent' },
+      { letter:'c', text:'Living environment is not conducive to recovery goals & jeopardizes recovery efforts', auto: s => ['active_users','unsafe','unstable','homeless'].includes(s.dim6.living) },
+      { letter:'d', text:'Family members or significant others are not supportive and/or passively opposed to treatment efforts', auto: s => ['using_peers','hostile'].includes(s.dim6.support) },
+      { letter:'e', text:'No active opposition but need for intermittent relief from home environment to focus on recovery', auto: s => s.dim6.support === 'limited' },
+    ],
+  },
+  '2.1': {
+    1: [
+      { letter:'a', text:'No signs or symptoms of WD, or WD needs can be safely managed in 2.1 setting', auto: s => !s.dim1.severity || s.dim1.severity === 'none' },
+    ],
+    2: [
+      { letter:'a', text:'Biomedical conditions are stable or being addressed & do not interfere with treatment', auto: s => ['none','low'].includes(s.dim2.severity) },
+    ],
+    3: [
+      { letter:'a', text:'Emotional/Behavioral/Cognitive conditions do not interfere with treatment', auto: s => ['none','mild'].includes(s.dim3.severity) },
+    ],
+    4: [
+      { letter:'a', text:'Requires structured therapy to promote treatment progress due to failure at lower LOC', auto: s => ['two_three','multiple'].includes(s.dim5.priorTx) },
+      { letter:'b', text:'Perspective inhibits ability to make behavioral changes without structured motivational interventions', auto: s => ['resistant','ambivalent'].includes(s.dim4.engagement) },
+    ],
+    5: [
+      { letter:'a', text:'Functioning is deteriorating despite modification of treatment plan in a lower LOC', auto: s => s.dim5.priorTx === 'multiple' },
+      { letter:'b', text:'Continues to use or relapse without structured therapy', auto: s => ['high','imminent'].includes(s.dim5.risk) },
+    ],
+    6: [
+      { letter:'a', text:'Lacks the resources/skills to maintain adequate level of functioning', auto: s => s.dim6.support === 'absent' },
+      { letter:'b', text:'Lacks social contacts or has unsupportive social contacts that jeopardize recovery', auto: s => ['absent','using_peers','hostile'].includes(s.dim6.support) },
+    ],
+  },
+  '1.0': {
+    1: [
+      { letter:'a', text:'No signs or symptoms of WD, or WD needs can be safely managed in 1.0 setting', auto: s => !s.dim1.severity || s.dim1.severity === 'none' },
+    ],
+    2: [
+      { letter:'a', text:'Sufficiently stable to permit participation in outpatient treatment', auto: s => ['none','low'].includes(s.dim2.severity) },
+    ],
+    3: [
+      { letter:'a', text:'Co-occurring MH disorders are mild & do not interfere with addiction treatment issues', auto: s => ['none','mild'].includes(s.dim3.severity) },
+      { letter:'b', text:'Psychiatric symptoms are related to substance use (anxiety, guilt, thought disorders)', auto: s => s.dim3.severity === 'mild' },
+      { letter:'c', text:'Mental status does not interfere with ability to participate in treatment', auto: s => ['none','mild'].includes(s.dim3.severity) },
+      { letter:'d', text:'Does not pose risk to self or others', auto: s => !s.dim3.symptoms.includes('Active suicidal ideation') && !s.dim3.symptoms.includes('Homicidal ideation') },
+    ],
+    4: [
+      { letter:'a', text:'Expresses willingness to engage in all facets of treatment & scheduled activities', auto: s => ['preparation','action'].includes(s.dim4.stage) },
+      { letter:'b', text:'Acknowledges SUD & MH problem & wants help to change', auto: s => ['preparation','action'].includes(s.dim4.stage) },
+      { letter:'c', text:'Ambivalent to SUD or MH problem & requires monitoring and motivating strategies', auto: s => s.dim4.stage === 'contemplation' },
+      { letter:'d', text:'Does not recognize SUD or MH problem', auto: s => s.dim4.stage === 'precontemplation' },
+    ],
+    5: [
+      { letter:'a', text:'Able to maintain abstinence/control use', auto: s => s.dim5.risk === 'low' },
+      { letter:'b', text:'Able to pursue recovery/motivational goals with therapeutic support', auto: s => ['low','moderate'].includes(s.dim5.risk) },
+    ],
+    6: [
+      { letter:'a', text:'Environment is sufficiently supportive that outpatient treatment is feasible', auto: s => ['supportive','neutral'].includes(s.dim6.envRisk) },
+      { letter:'b', text:'Lacks primary or social support but is motivated to obtain support system', auto: s => s.dim6.support === 'absent' && ['preparation','action'].includes(s.dim4.stage) },
+      { letter:'c', text:'Support systems are present but require therapeutic interventions for success', auto: s => s.dim6.support === 'limited' },
+    ],
+  },
+};
+
+const DIM_NAMES = {
+  1:'Dimension 1 — Acute Intoxication / Withdrawal Potential',
+  2:'Dimension 2 — Biomedical Conditions',
+  3:'Dimension 3 — Emotional, Behavioral, or Cognitive Conditions',
+  4:'Dimension 4 — Readiness to Change',
+  5:'Dimension 5 — Relapse / Continued Use Potential',
+  6:'Dimension 6 — Recovery / Living Environment',
+};
+
+function renderCriteria() {
+  const loc = state.loc;
+  const map = CRITERIA_MAP[loc];
+  if (!map) return;
+
+  const container = document.getElementById('criteriaContent');
+  container.innerHTML = '';
+
+  [1,2,3,4,5,6].forEach(dimNum => {
+    const items = map[dimNum];
+    if (!items || !items.length) return;
+
+    const dimEl = document.createElement('div');
+    dimEl.className = 'criteria-dim';
+
+    const header = document.createElement('div');
+    header.className = 'criteria-dim-header';
+    header.textContent = DIM_NAMES[dimNum];
+    dimEl.appendChild(header);
+
+    items.forEach(item => {
+      const suggested = item.auto(state);
+      const row = document.createElement('label');
+      row.className = 'criteria-item' + (suggested ? ' suggested' : '');
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = suggested;
+      cb.dataset.dim = dimNum;
+      cb.dataset.letter = item.letter;
+
+      const letterEl = document.createElement('span');
+      letterEl.className = 'criteria-letter';
+      letterEl.textContent = item.letter + '.';
+
+      const textEl = document.createElement('span');
+      textEl.className = 'criteria-text';
+      textEl.textContent = item.text;
+
+      row.appendChild(cb);
+      row.appendChild(letterEl);
+      row.appendChild(textEl);
+
+      if (suggested) {
+        const tag = document.createElement('span');
+        tag.className = 'criteria-tag';
+        tag.textContent = 'Suggested';
+        row.appendChild(tag);
+      }
+
+      dimEl.appendChild(row);
+    });
+
+    container.appendChild(dimEl);
+  });
+
+  document.getElementById('criteriaBlock').classList.add('visible');
+}
+
+function copyCriteria(btn) {
+  const dims = {};
+  document.querySelectorAll('#criteriaContent input[type="checkbox"]:checked').forEach(cb => {
+    const d = cb.dataset.dim;
+    if (!dims[d]) dims[d] = [];
+    dims[d].push(cb.dataset.letter);
+  });
+
+  if (!Object.keys(dims).length) { doCopy('No criteria selected.', btn); return; }
+
+  const loc = LOC_CONFIG[state.loc]?.name || state.loc;
+  let text = `Remarkable Criteria — ${loc}\n\n`;
+  Object.keys(dims).sort().forEach(d => {
+    text += `Dimension ${d}: ${dims[d].join(', ')}\n`;
+  });
+
+  doCopy(text.trim(), btn);
+}
 
 // ═══════════════════════════════════════════════════
 // STATE
@@ -1838,6 +2214,7 @@ function generate() {
   document.getElementById('outputPlaceholder').style.display = 'none';
   document.getElementById('outputDoc').classList.add('visible');
   document.getElementById('proofreadBanner').style.display = 'flex';
+  renderCriteria();
 }
 
 // ═══════════════════════════════════════════════════
