@@ -357,16 +357,37 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
 .doc-meta span:first-child::before { display: none; }
 
 .doc-section { margin-bottom: 18px; }
+.doc-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--accent-light);
+}
 .doc-section-title {
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.09em;
   color: var(--accent);
-  margin-bottom: 6px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--accent-light);
 }
+.section-copy-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.section-copy-btn:hover { background: var(--bg); border-color: var(--accent); color: var(--accent); }
+.section-copy-btn.copied { background: var(--primary-badge-bg); border-color: #1a6b35; color: #1a6b35; }
 .doc-section-text {
   font-size: 13px;
   line-height: 1.75;
@@ -432,6 +453,12 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
   background: #fff8f8;
 }
 .field-error .form-label { color: #c0392b; }
+.field-error .severity-pills {
+  padding: 4px;
+  border: 1px solid #c0392b;
+  border-radius: 20px;
+  background: #fff8f8;
+}
 
 .error-panel {
   background: #fff0f0;
@@ -543,8 +570,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           <div class="dim-desc">Current intoxication state, withdrawal risk, and degree of medical monitoring required.</div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Withdrawal Severity</label>
+        <div class="form-group" id="grp-dim1-severity">
+          <label class="form-label">Withdrawal Severity<span class="req-star dim1-req" style="display:none">*</span></label>
           <div class="severity-pills" id="dim1-sev-pills">
             <button class="severity-pill" onclick="setSeverity('dim1','severity','none',this)">None / N/A</button>
             <button class="severity-pill" onclick="setSeverity('dim1','severity','mild',this)">Mild</button>
@@ -553,14 +580,14 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Primary Substance(s)</label>
-          <input class="form-input" placeholder="e.g. alcohol, opioids, benzodiazepines" oninput="state.dim1.substances=this.value">
+        <div class="form-group" id="grp-dim1-substances">
+          <label class="form-label">Primary Substance(s)<span class="req-star dim1-req" style="display:none">*</span></label>
+          <input class="form-input" placeholder="e.g. alcohol, opioids, benzodiazepines" oninput="state.dim1.substances=this.value;clearGrpError('grp-dim1-substances')">
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Last Use</label>
-          <input class="form-input" placeholder="e.g. 48 hours prior to admission" oninput="state.dim1.lastUse=this.value">
+        <div class="form-group" id="grp-dim1-lastuse">
+          <label class="form-label">Last Use<span class="req-star dim1-req" style="display:none">*</span></label>
+          <input class="form-input" placeholder="e.g. 48 hours prior to admission" oninput="state.dim1.lastUse=this.value;clearGrpError('grp-dim1-lastuse')">
         </div>
 
         <div class="score-row">
@@ -579,9 +606,9 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           <div id="dim1-symptoms" class="checkbox-group"></div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">History of Complicated Withdrawal</label>
-          <select class="form-select" onchange="state.dim1.complicatedHistory=this.value">
+        <div class="form-group" id="grp-dim1-complicated">
+          <label class="form-label">History of Complicated Withdrawal<span class="req-star dim1-req" style="display:none">*</span></label>
+          <select class="form-select" onchange="state.dim1.complicatedHistory=this.value;clearGrpError('grp-dim1-complicated')">
             <option value="">— Select —</option>
             <option value="none">No significant history</option>
             <option value="seizure">Prior withdrawal-related seizure(s)</option>
@@ -600,7 +627,7 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           <div class="continued-section-title">Continued Stay — Dimension 1</div>
           <div class="form-group" id="grp-dim1-cs-status">
             <label class="form-label">Current Withdrawal Status<span class="req-star">*</span></label>
-            <select class="form-select" id="req-dim1-cs-status" onchange="state.dim1.csStatus=this.value;clearError('grp-dim1-cs-status')">
+            <select class="form-select" onchange="state.dim1.csStatus=this.value;clearGrpError('grp-dim1-cs-status')">
               <option value="">— Select —</option>
               <option value="ongoing">Withdrawal ongoing, not yet stabilized</option>
               <option value="stabilizing">Stabilizing but requiring continued monitoring</option>
@@ -610,7 +637,7 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
           <div class="form-group" id="grp-dim1-cs-progress">
             <label class="form-label">Response to Treatment / Progress<span class="req-star">*</span></label>
-            <textarea class="form-textarea" id="req-dim1-cs-progress" placeholder="Describe client's response to withdrawal management to date…" oninput="state.dim1.csProgress=this.value;clearError('grp-dim1-cs-progress')"></textarea>
+            <textarea class="form-textarea" placeholder="Describe client's response to withdrawal management to date…" oninput="state.dim1.csProgress=this.value;clearGrpError('grp-dim1-cs-progress')"></textarea>
           </div>
         </div>
       </div>
@@ -623,8 +650,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           <div class="dim-desc">Physical health conditions requiring medical attention or complicating SUD treatment.</div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Biomedical Severity</label>
+        <div class="form-group" id="grp-dim2-severity">
+          <label class="form-label">Biomedical Severity<span class="req-star dim2-req" style="display:none">*</span></label>
           <div class="severity-pills" id="dim2-sev-pills">
             <button class="severity-pill" onclick="setSeverity('dim2','severity','none',this)">None</button>
             <button class="severity-pill" onclick="setSeverity('dim2','severity','low',this)">Low</button>
@@ -633,14 +660,14 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Active Medical Conditions / Diagnoses</label>
-          <textarea class="form-textarea" placeholder="e.g. Hepatitis C, COPD, hypertension, diabetes, chronic pain, TBI, HIV…" oninput="state.dim2.conditions=this.value"></textarea>
+        <div class="form-group" id="grp-dim2-conditions">
+          <label class="form-label">Active Medical Conditions / Diagnoses<span class="req-star dim2-req" style="display:none">*</span></label>
+          <textarea class="form-textarea" placeholder="e.g. Hepatitis C, COPD, hypertension, diabetes, chronic pain, TBI, HIV…" oninput="state.dim2.conditions=this.value;clearGrpError('grp-dim2-conditions')"></textarea>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">How Conditions Complicate Treatment</label>
-          <textarea class="form-textarea" placeholder="Describe how medical conditions affect safe engagement in lower levels of care…" oninput="state.dim2.impact=this.value"></textarea>
+        <div class="form-group" id="grp-dim2-impact">
+          <label class="form-label">How Conditions Complicate Treatment<span class="req-star dim2-req" style="display:none">*</span></label>
+          <textarea class="form-textarea" placeholder="Describe how medical conditions affect safe engagement in lower levels of care…" oninput="state.dim2.impact=this.value;clearGrpError('grp-dim2-impact')"></textarea>
         </div>
 
         <div class="form-group">
@@ -655,18 +682,18 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
 
         <div class="continued-section" id="dim2-cs" style="display:none">
           <div class="continued-section-title">Continued Stay — Dimension 2</div>
-          <div class="form-group">
-            <label class="form-label">Current Medical Status</label>
-            <select class="form-select" onchange="state.dim2.csStatus=this.value">
+          <div class="form-group" id="grp-dim2-cs-status">
+            <label class="form-label">Current Medical Status<span class="req-star">*</span></label>
+            <select class="form-select" onchange="state.dim2.csStatus=this.value;clearGrpError('grp-dim2-cs-status')">
               <option value="">— Select —</option>
               <option value="unresolved">Conditions unresolved; ongoing monitoring required</option>
               <option value="improving">Improving but requiring continued clinical oversight</option>
               <option value="stable">Medically stable; not a primary continued stay driver</option>
             </select>
           </div>
-          <div class="form-group">
-            <label class="form-label">Progress / Response to Treatment</label>
-            <textarea class="form-textarea" placeholder="Describe progress in managing biomedical conditions…" oninput="state.dim2.csProgress=this.value"></textarea>
+          <div class="form-group" id="grp-dim2-cs-progress">
+            <label class="form-label">Progress / Response to Treatment<span class="req-star">*</span></label>
+            <textarea class="form-textarea" placeholder="Describe progress in managing biomedical conditions…" oninput="state.dim2.csProgress=this.value;clearGrpError('grp-dim2-cs-progress')"></textarea>
           </div>
         </div>
       </div>
@@ -679,8 +706,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           <div class="dim-desc">Co-occurring psychiatric symptoms or cognitive conditions affecting treatment response.</div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Psychiatric / Cognitive Severity</label>
+        <div class="form-group" id="grp-dim3-severity">
+          <label class="form-label">Psychiatric / Cognitive Severity<span class="req-star dim3-req" style="display:none">*</span></label>
           <div class="severity-pills" id="dim3-sev-pills">
             <button class="severity-pill" onclick="setSeverity('dim3','severity','none',this)">None / Stable</button>
             <button class="severity-pill" onclick="setSeverity('dim3','severity','mild',this)">Mild</button>
@@ -689,9 +716,9 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Psychiatric Diagnoses</label>
-          <input class="form-input" placeholder="e.g. MDD, PTSD, Bipolar I, GAD, Schizoaffective Disorder…" oninput="state.dim3.diagnoses=this.value">
+        <div class="form-group" id="grp-dim3-diagnoses">
+          <label class="form-label">Psychiatric Diagnoses<span class="req-star dim3-req" style="display:none">*</span></label>
+          <input class="form-input" placeholder="e.g. MDD, PTSD, Bipolar I, GAD, Schizoaffective Disorder…" oninput="state.dim3.diagnoses=this.value;clearGrpError('grp-dim3-diagnoses')">
         </div>
 
         <div class="form-group">
@@ -699,9 +726,9 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           <div id="dim3-symptoms" class="checkbox-group"></div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">How Symptoms Impair Treatment Engagement or Safety</label>
-          <textarea class="form-textarea" placeholder="Describe how psychiatric symptoms limit the client's ability to safely engage in, retain benefit from, or remain stable in a less intensive setting…" oninput="state.dim3.impact=this.value"></textarea>
+        <div class="form-group" id="grp-dim3-impact">
+          <label class="form-label">How Symptoms Impair Treatment Engagement or Safety<span class="req-star dim3-req" style="display:none">*</span></label>
+          <textarea class="form-textarea" placeholder="Describe how psychiatric symptoms limit the client's ability to safely engage in, retain benefit from, or remain stable in a less intensive setting…" oninput="state.dim3.impact=this.value;clearGrpError('grp-dim3-impact')"></textarea>
         </div>
 
         <div class="form-group">
@@ -711,9 +738,9 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
 
         <div class="continued-section" id="dim3-cs" style="display:none">
           <div class="continued-section-title">Continued Stay — Dimension 3</div>
-          <div class="form-group">
-            <label class="form-label">Current Psychiatric Status</label>
-            <select class="form-select" onchange="state.dim3.csStatus=this.value">
+          <div class="form-group" id="grp-dim3-cs-status">
+            <label class="form-label">Current Psychiatric Status<span class="req-star">*</span></label>
+            <select class="form-select" onchange="state.dim3.csStatus=this.value;clearGrpError('grp-dim3-cs-status')">
               <option value="">— Select —</option>
               <option value="unstable">Symptoms remain clinically significant and unstable</option>
               <option value="stabilizing">Stabilizing; continued clinical support required</option>
@@ -722,7 +749,7 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
           <div class="form-group" id="grp-dim3-cs-goals">
             <label class="form-label">Remaining Psychiatric Treatment Goals<span class="req-star">*</span></label>
-            <textarea class="form-textarea" id="req-dim3-cs-goals" placeholder="What psychiatric goals remain? Why is continued level of care necessary?" oninput="state.dim3.csGoals=this.value;clearError('grp-dim3-cs-goals')"></textarea>
+            <textarea class="form-textarea" placeholder="What psychiatric goals remain? Why is continued level of care necessary?" oninput="state.dim3.csGoals=this.value;clearGrpError('grp-dim3-cs-goals')"></textarea>
           </div>
         </div>
       </div>
@@ -735,9 +762,9 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           <div class="dim-desc">Client's motivation, insight, and engagement with the recovery process.</div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Stage of Change</label>
-          <select class="form-select" onchange="state.dim4.stage=this.value">
+        <div class="form-group" id="grp-dim4-stage">
+          <label class="form-label">Stage of Change<span class="req-star dim4-req" style="display:none">*</span></label>
+          <select class="form-select" onchange="state.dim4.stage=this.value;clearGrpError('grp-dim4-stage')">
             <option value="">— Select —</option>
             <option value="precontemplation">Precontemplation — Does not acknowledge a substance use problem</option>
             <option value="contemplation">Contemplation — Ambivalent; partial acknowledgment</option>
@@ -746,8 +773,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </select>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Insight into Substance Use Disorder</label>
+        <div class="form-group" id="grp-dim4-insight">
+          <label class="form-label">Insight into Substance Use Disorder<span class="req-star dim4-req" style="display:none">*</span></label>
           <div class="severity-pills" id="dim4-insight-pills">
             <button class="severity-pill" onclick="setSeverity('dim4','insight','poor',this)">Poor</button>
             <button class="severity-pill" onclick="setSeverity('dim4','insight','fair',this)">Fair</button>
@@ -755,9 +782,9 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Treatment Engagement</label>
-          <select class="form-select" onchange="state.dim4.engagement=this.value">
+        <div class="form-group" id="grp-dim4-engagement">
+          <label class="form-label">Treatment Engagement<span class="req-star dim4-req" style="display:none">*</span></label>
+          <select class="form-select" onchange="state.dim4.engagement=this.value;clearGrpError('grp-dim4-engagement')">
             <option value="">— Select —</option>
             <option value="resistant">Resistant — Opposed to treatment participation</option>
             <option value="ambivalent">Ambivalent — Variable, inconsistent engagement</option>
@@ -768,19 +795,19 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
 
         <div class="form-group" id="grp-dim4-barriers">
           <label class="form-label">Engagement Barriers / Resistance Factors<span class="req-star">*</span></label>
-          <textarea class="form-textarea" id="req-dim4-barriers" placeholder="Specific resistance, denial patterns, or barriers to engagement…" oninput="state.dim4.barriers=this.value;clearError('grp-dim4-barriers')"></textarea>
+          <textarea class="form-textarea" placeholder="Specific resistance, denial patterns, or barriers to engagement…" oninput="state.dim4.barriers=this.value;clearGrpError('grp-dim4-barriers')"></textarea>
         </div>
 
         <div class="form-group" id="grp-dim4-rationale">
           <label class="form-label">Why This LOC Is Necessary for Engagement<span class="req-star">*</span></label>
-          <textarea class="form-textarea" id="req-dim4-rationale" placeholder="What level of structure or clinical intervention does the client's readiness level require?" oninput="state.dim4.locRationale=this.value;clearError('grp-dim4-rationale')"></textarea>
+          <textarea class="form-textarea" placeholder="What level of structure or clinical intervention does the client's readiness level require?" oninput="state.dim4.locRationale=this.value;clearGrpError('grp-dim4-rationale')"></textarea>
         </div>
 
         <div class="continued-section" id="dim4-cs" style="display:none">
           <div class="continued-section-title">Continued Stay — Dimension 4</div>
-          <div class="form-group">
-            <label class="form-label">Current Engagement Status</label>
-            <select class="form-select" onchange="state.dim4.csStatus=this.value">
+          <div class="form-group" id="grp-dim4-cs-status">
+            <label class="form-label">Current Engagement Status<span class="req-star">*</span></label>
+            <select class="form-select" onchange="state.dim4.csStatus=this.value;clearGrpError('grp-dim4-cs-status')">
               <option value="">— Select —</option>
               <option value="unchanged">Largely unchanged from admission; intensive intervention required</option>
               <option value="improving">Improving but not sufficient for step-down</option>
@@ -789,7 +816,7 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
           <div class="form-group" id="grp-dim4-cs-goals">
             <label class="form-label">Remaining Readiness / Engagement Goals<span class="req-star">*</span></label>
-            <textarea class="form-textarea" id="req-dim4-cs-goals" placeholder="What engagement or motivation goals remain? What would support safe step-down?" oninput="state.dim4.csGoals=this.value;clearError('grp-dim4-cs-goals')"></textarea>
+            <textarea class="form-textarea" placeholder="What engagement or motivation goals remain? What would support safe step-down?" oninput="state.dim4.csGoals=this.value;clearGrpError('grp-dim4-cs-goals')"></textarea>
           </div>
         </div>
       </div>
@@ -802,8 +829,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           <div class="dim-desc">Likelihood of return to use or continued harmful behavior without this level of care.</div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Assessed Relapse Risk</label>
+        <div class="form-group" id="grp-dim5-risk">
+          <label class="form-label">Assessed Relapse Risk<span class="req-star dim5-req" style="display:none">*</span></label>
           <div class="severity-pills" id="dim5-risk-pills">
             <button class="severity-pill" onclick="setSeverity('dim5','risk','low',this)">Low</button>
             <button class="severity-pill" onclick="setSeverity('dim5','risk','moderate',this)">Moderate</button>
@@ -812,9 +839,9 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Prior Treatment Episodes</label>
-          <select class="form-select" onchange="state.dim5.priorTx=this.value">
+        <div class="form-group" id="grp-dim5-priortx">
+          <label class="form-label">Prior Treatment Episodes<span class="req-star dim5-req" style="display:none">*</span></label>
+          <select class="form-select" onchange="state.dim5.priorTx=this.value;clearGrpError('grp-dim5-priortx')">
             <option value="">— Select —</option>
             <option value="none">No prior treatment history</option>
             <option value="one">1 prior episode</option>
@@ -828,8 +855,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           <div id="dim5-triggers" class="checkbox-group"></div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Current Coping Skill Development</label>
+        <div class="form-group" id="grp-dim5-coping">
+          <label class="form-label">Current Coping Skill Development<span class="req-star dim5-req" style="display:none">*</span></label>
           <div class="severity-pills" id="dim5-coping-pills">
             <button class="severity-pill" onclick="setSeverity('dim5','coping','poor',this)">Poor / Absent</button>
             <button class="severity-pill" onclick="setSeverity('dim5','coping','developing',this)">Developing</button>
@@ -846,7 +873,7 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           <div class="continued-section-title">Continued Stay — Dimension 5</div>
           <div class="form-group" id="grp-dim5-cs-status">
             <label class="form-label">Current Relapse Risk Status<span class="req-star">*</span></label>
-            <select class="form-select" id="req-dim5-cs-status" onchange="state.dim5.csStatus=this.value;clearError('grp-dim5-cs-status')">
+            <select class="form-select" onchange="state.dim5.csStatus=this.value;clearGrpError('grp-dim5-cs-status')">
               <option value="">— Select —</option>
               <option value="unresolved">Risk remains high; would be substantially elevated by step-down</option>
               <option value="improving">Risk decreasing; coping skills still insufficient for step-down</option>
@@ -855,7 +882,7 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
           <div class="form-group" id="grp-dim5-cs-progress">
             <label class="form-label">Relapse Prevention Progress / Remaining Goals<span class="req-star">*</span></label>
-            <textarea class="form-textarea" id="req-dim5-cs-progress" placeholder="What skills have been developed? What gaps remain? Why is step-down not yet appropriate?" oninput="state.dim5.csProgress=this.value;clearError('grp-dim5-cs-progress')"></textarea>
+            <textarea class="form-textarea" placeholder="What skills have been developed? What gaps remain? Why is step-down not yet appropriate?" oninput="state.dim5.csProgress=this.value;clearGrpError('grp-dim5-cs-progress')"></textarea>
           </div>
         </div>
       </div>
@@ -868,9 +895,68 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           <div class="dim-desc">The client's home, social network, and community context and their impact on recovery.</div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Environmental Risk Level</label>
+        <div class="form-group" id="grp-dim6-envrisk">
+          <label class="form-label">Environmental Risk Level<span class="req-star dim6-req" style="display:none">*</span></label>
           <div class="severity-pills" id="dim6-risk-pills">
+            <button class="severity-pill" onclick="setSeverity('dim6','envRisk','supportive',this)">Supportive</button>
+            <button class="severity-pill" onclick="setSeverity('dim6','envRisk','neutral',this)">Neutral</button>
+            <button class="severity-pill" onclick="setSeverity('dim6','envRisk','unsupportive',this)">Unsupportive</button>
+            <button class="severity-pill" onclick="setSeverity('dim6','envRisk','high_risk',this)">High Risk</button>
+          </div>
+        </div>
+
+        <div class="form-group" id="grp-dim6-living">
+          <label class="form-label">Current Living Situation<span class="req-star dim6-req" style="display:none">*</span></label>
+          <select class="form-select" onchange="state.dim6.living=this.value;clearGrpError('grp-dim6-living')">
+            <option value="">— Select —</option>
+            <option value="stable">Stable housing (family home or independent)</option>
+            <option value="recovery_housing">Recovery / sober living housing</option>
+            <option value="unstable">Unstable / transitional housing</option>
+            <option value="homeless">Homeless / no fixed address</option>
+            <option value="active_users">Living with active substance users</option>
+            <option value="unsafe">Unsafe living environment</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="grp-dim6-support">
+          <label class="form-label">Recovery Support System<span class="req-star dim6-req" style="display:none">*</span></label>
+          <select class="form-select" onchange="state.dim6.support=this.value;clearGrpError('grp-dim6-support')">
+            <option value="">— Select —</option>
+            <option value="strong">Strong — Family/friends actively supportive of recovery</option>
+            <option value="limited">Limited — Some support present but insufficient</option>
+            <option value="absent">Absent — No meaningful support system</option>
+            <option value="using_peers">Primarily using peers — Social network consists of active users</option>
+            <option value="hostile">Hostile — Family/social network undermines recovery efforts</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Environmental Risk Factors</label>
+          <div id="dim6-risks" class="checkbox-group"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Additional Environmental Observations</label>
+          <textarea class="form-textarea" placeholder="Other contextual factors affecting the client's recovery environment…" oninput="state.dim6.notes=this.value"></textarea>
+        </div>
+
+        <div class="continued-section" id="dim6-cs" style="display:none">
+          <div class="continued-section-title">Continued Stay — Dimension 6</div>
+          <div class="form-group" id="grp-dim6-cs-status">
+            <label class="form-label">Current Environmental Status<span class="req-star">*</span></label>
+            <select class="form-select" onchange="state.dim6.csStatus=this.value;clearGrpError('grp-dim6-cs-status')">
+              <option value="">— Select —</option>
+              <option value="unchanged">Environmental risks remain; safe discharge plan not yet established</option>
+              <option value="partial">Discharge planning in progress; transition not yet secured</option>
+              <option value="improved">Environment improved; client not yet ready for transition</option>
+            </select>
+          </div>
+          <div class="form-group" id="grp-dim6-cs-progress">
+            <label class="form-label">Discharge / Step-Down Planning Progress<span class="req-star">*</span></label>
+            <textarea class="form-textarea" placeholder="What is the step-down plan? What environmental barriers remain?" oninput="state.dim6.csProgress=this.value;clearGrpError('grp-dim6-cs-progress')"></textarea>
+          </div>
+        </div>
+      </div>
             <button class="severity-pill" onclick="setSeverity('dim6','envRisk','supportive',this)">Supportive</button>
             <button class="severity-pill" onclick="setSeverity('dim6','envRisk','neutral',this)">Neutral</button>
             <button class="severity-pill" onclick="setSeverity('dim6','envRisk','unsupportive',this)">Unsupportive</button>
@@ -902,34 +988,6 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
             <option value="hostile">Hostile — Family/social network undermines recovery efforts</option>
           </select>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Environmental Risk Factors</label>
-          <div id="dim6-risks" class="checkbox-group"></div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Additional Environmental Observations</label>
-          <textarea class="form-textarea" placeholder="Other contextual factors affecting the client's recovery environment…" oninput="state.dim6.notes=this.value"></textarea>
-        </div>
-
-        <div class="continued-section" id="dim6-cs" style="display:none">
-          <div class="continued-section-title">Continued Stay — Dimension 6</div>
-          <div class="form-group" id="grp-dim6-cs-status">
-            <label class="form-label">Current Environmental Status<span class="req-star">*</span></label>
-            <select class="form-select" id="req-dim6-cs-status" onchange="state.dim6.csStatus=this.value;clearError('grp-dim6-cs-status')">
-              <option value="">— Select —</option>
-              <option value="unchanged">Environmental risks remain; safe discharge plan not yet established</option>
-              <option value="partial">Discharge planning in progress; transition not yet secured</option>
-              <option value="improved">Environment improved; client not yet ready for transition</option>
-            </select>
-          </div>
-          <div class="form-group" id="grp-dim6-cs-progress">
-            <label class="form-label">Discharge / Step-Down Planning Progress<span class="req-star">*</span></label>
-            <textarea class="form-textarea" id="req-dim6-cs-progress" placeholder="What is the step-down plan? What environmental barriers remain?" oninput="state.dim6.csProgress=this.value;clearError('grp-dim6-cs-progress')"></textarea>
-          </div>
-        </div>
-      </div>
 
     </div><!-- /dim-content -->
   </div><!-- /left-panel -->
@@ -965,42 +1023,66 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
         </div>
 
         <div class="doc-section">
-          <div class="doc-section-title">Summary Statement</div>
+          <div class="doc-section-header">
+            <div class="doc-section-title">Summary Statement</div>
+            <button class="section-copy-btn" onclick="copySection('outSummary', this)">Copy</button>
+          </div>
           <div class="doc-section-text" id="outSummary"></div>
         </div>
 
         <div class="doc-section" id="sec1" style="display:none">
-          <div class="doc-section-title">Dimension 1 — Acute Intoxication / Withdrawal Potential</div>
+          <div class="doc-section-header">
+            <div class="doc-section-title">Dimension 1 — Acute Intoxication / Withdrawal Potential</div>
+            <button class="section-copy-btn" onclick="copySection('outDim1', this)">Copy</button>
+          </div>
           <div class="doc-section-text" id="outDim1"></div>
         </div>
 
         <div class="doc-section" id="sec2" style="display:none">
-          <div class="doc-section-title">Dimension 2 — Biomedical Conditions and Complications</div>
+          <div class="doc-section-header">
+            <div class="doc-section-title">Dimension 2 — Biomedical Conditions and Complications</div>
+            <button class="section-copy-btn" onclick="copySection('outDim2', this)">Copy</button>
+          </div>
           <div class="doc-section-text" id="outDim2"></div>
         </div>
 
         <div class="doc-section" id="sec3" style="display:none">
-          <div class="doc-section-title">Dimension 3 — Emotional, Behavioral, or Cognitive Conditions</div>
+          <div class="doc-section-header">
+            <div class="doc-section-title">Dimension 3 — Emotional, Behavioral, or Cognitive Conditions</div>
+            <button class="section-copy-btn" onclick="copySection('outDim3', this)">Copy</button>
+          </div>
           <div class="doc-section-text" id="outDim3"></div>
         </div>
 
         <div class="doc-section" id="sec4" style="display:none">
-          <div class="doc-section-title">Dimension 4 — Readiness to Change</div>
+          <div class="doc-section-header">
+            <div class="doc-section-title">Dimension 4 — Readiness to Change</div>
+            <button class="section-copy-btn" onclick="copySection('outDim4', this)">Copy</button>
+          </div>
           <div class="doc-section-text" id="outDim4"></div>
         </div>
 
         <div class="doc-section" id="sec5" style="display:none">
-          <div class="doc-section-title">Dimension 5 — Relapse, Continued Use, or Continued Problem Potential</div>
+          <div class="doc-section-header">
+            <div class="doc-section-title">Dimension 5 — Relapse, Continued Use, or Continued Problem Potential</div>
+            <button class="section-copy-btn" onclick="copySection('outDim5', this)">Copy</button>
+          </div>
           <div class="doc-section-text" id="outDim5"></div>
         </div>
 
         <div class="doc-section" id="sec6" style="display:none">
-          <div class="doc-section-title">Dimension 6 — Recovery / Living Environment</div>
+          <div class="doc-section-header">
+            <div class="doc-section-title">Dimension 6 — Recovery / Living Environment</div>
+            <button class="section-copy-btn" onclick="copySection('outDim6', this)">Copy</button>
+          </div>
           <div class="doc-section-text" id="outDim6"></div>
         </div>
 
         <div class="doc-section">
-          <div class="doc-section-title">Medical Necessity Determination</div>
+          <div class="doc-section-header">
+            <div class="doc-section-title">Medical Necessity Determination</div>
+            <button class="section-copy-btn" onclick="copySection('outDetermination', this)">Copy</button>
+          </div>
           <div class="doc-section-text" id="outDetermination"></div>
         </div>
       </div>
@@ -1094,6 +1176,8 @@ function setSeverity(dim, field, value, el) {
   state[dim][field] = value;
   el.closest('.severity-pills').querySelectorAll('.severity-pill').forEach(p => p.classList.remove('selected'));
   el.classList.add('selected');
+  const grp = el.closest('.form-group');
+  if (grp) grp.classList.remove('field-error');
 }
 
 function setAdmissionType(type) {
@@ -1118,6 +1202,7 @@ document.getElementById('locSelect').addEventListener('change', function() {
   state.loc = this.value;
   document.getElementById('noLocOverlay').style.display = this.value ? 'none' : 'flex';
   updateDimBadges();
+  updateRequiredMarkers();
 });
 
 document.getElementById('docDate').value = new Date().toISOString().split('T')[0];
@@ -1530,47 +1615,121 @@ function genDetermination() {
 // ═══════════════════════════════════════════════════
 // VALIDATION
 // ═══════════════════════════════════════════════════
-function clearError(groupId) {
+function clearGrpError(groupId) {
   const el = document.getElementById(groupId);
   if (el) el.classList.remove('field-error');
 }
 
+// Keep old name for any remaining references
+function clearError(groupId) { clearGrpError(groupId); }
+
+// Called from setSeverity — auto-clears parent form-group error
+function clearPillError(el) {
+  const grp = el.closest('.form-group');
+  if (grp) grp.classList.remove('field-error');
+}
+
+// Primary driver required fields per dimension (LOC-independent within that dim)
+const DIM_REQUIRED = {
+  1: [
+    { get: () => state.dim1.severity,          grp: 'grp-dim1-severity',    label: 'Dim 1 — Withdrawal Severity' },
+    { get: () => state.dim1.substances,         grp: 'grp-dim1-substances',  label: 'Dim 1 — Primary Substance(s)' },
+    { get: () => state.dim1.lastUse,            grp: 'grp-dim1-lastuse',     label: 'Dim 1 — Last Use' },
+    { get: () => state.dim1.complicatedHistory, grp: 'grp-dim1-complicated', label: 'Dim 1 — History of Complicated Withdrawal' },
+  ],
+  2: [
+    { get: () => state.dim2.severity,   grp: 'grp-dim2-severity',   label: 'Dim 2 — Biomedical Severity' },
+    { get: () => state.dim2.conditions, grp: 'grp-dim2-conditions', label: 'Dim 2 — Active Medical Conditions' },
+    { get: () => state.dim2.impact,     grp: 'grp-dim2-impact',     label: 'Dim 2 — How Conditions Complicate Treatment' },
+  ],
+  3: [
+    { get: () => state.dim3.severity,  grp: 'grp-dim3-severity',  label: 'Dim 3 — Psychiatric / Cognitive Severity' },
+    { get: () => state.dim3.diagnoses, grp: 'grp-dim3-diagnoses', label: 'Dim 3 — Psychiatric Diagnoses' },
+    { get: () => state.dim3.impact,    grp: 'grp-dim3-impact',    label: 'Dim 3 — How Symptoms Impair Treatment Engagement or Safety' },
+  ],
+  4: [
+    { get: () => state.dim4.stage,       grp: 'grp-dim4-stage',      label: 'Dim 4 — Stage of Change' },
+    { get: () => state.dim4.insight,     grp: 'grp-dim4-insight',    label: 'Dim 4 — Insight into Substance Use Disorder' },
+    { get: () => state.dim4.engagement,  grp: 'grp-dim4-engagement', label: 'Dim 4 — Treatment Engagement' },
+    { get: () => state.dim4.barriers,    grp: 'grp-dim4-barriers',   label: 'Dim 4 — Engagement Barriers / Resistance Factors' },
+    { get: () => state.dim4.locRationale,grp: 'grp-dim4-rationale',  label: 'Dim 4 — Why This LOC Is Necessary for Engagement' },
+  ],
+  5: [
+    { get: () => state.dim5.risk,    grp: 'grp-dim5-risk',    label: 'Dim 5 — Assessed Relapse Risk' },
+    { get: () => state.dim5.priorTx, grp: 'grp-dim5-priortx', label: 'Dim 5 — Prior Treatment Episodes' },
+    { get: () => state.dim5.coping,  grp: 'grp-dim5-coping',  label: 'Dim 5 — Current Coping Skill Development' },
+  ],
+  6: [
+    { get: () => state.dim6.envRisk, grp: 'grp-dim6-envrisk', label: 'Dim 6 — Environmental Risk Level' },
+    { get: () => state.dim6.living,  grp: 'grp-dim6-living',  label: 'Dim 6 — Current Living Situation' },
+    { get: () => state.dim6.support, grp: 'grp-dim6-support', label: 'Dim 6 — Recovery Support System' },
+  ],
+};
+
+// All continued stay fields across all dims
+const CS_REQUIRED = [
+  { get: () => state.dim1.csStatus,   grp: 'grp-dim1-cs-status',   dim: 1, label: 'Dim 1 — Current Withdrawal Status' },
+  { get: () => state.dim1.csProgress, grp: 'grp-dim1-cs-progress', dim: 1, label: 'Dim 1 — Response to Treatment / Progress' },
+  { get: () => state.dim2.csStatus,   grp: 'grp-dim2-cs-status',   dim: 2, label: 'Dim 2 — Current Medical Status' },
+  { get: () => state.dim2.csProgress, grp: 'grp-dim2-cs-progress', dim: 2, label: 'Dim 2 — Progress / Response to Treatment' },
+  { get: () => state.dim3.csStatus,   grp: 'grp-dim3-cs-status',   dim: 3, label: 'Dim 3 — Current Psychiatric Status' },
+  { get: () => state.dim3.csGoals,    grp: 'grp-dim3-cs-goals',    dim: 3, label: 'Dim 3 — Remaining Psychiatric Treatment Goals' },
+  { get: () => state.dim4.csStatus,   grp: 'grp-dim4-cs-status',   dim: 4, label: 'Dim 4 — Current Engagement Status' },
+  { get: () => state.dim4.csGoals,    grp: 'grp-dim4-cs-goals',    dim: 4, label: 'Dim 4 — Remaining Readiness / Engagement Goals' },
+  { get: () => state.dim5.csStatus,   grp: 'grp-dim5-cs-status',   dim: 5, label: 'Dim 5 — Current Relapse Risk Status' },
+  { get: () => state.dim5.csProgress, grp: 'grp-dim5-cs-progress', dim: 5, label: 'Dim 5 — Relapse Prevention Progress / Remaining Goals' },
+  { get: () => state.dim6.csStatus,   grp: 'grp-dim6-cs-status',   dim: 6, label: 'Dim 6 — Current Environmental Status' },
+  { get: () => state.dim6.csProgress, grp: 'grp-dim6-cs-progress', dim: 6, label: 'Dim 6 — Discharge / Step-Down Planning Progress' },
+];
+
 function validate() {
   const errors = [];
   const type = state.admissionType;
+  const cfg = LOC_CONFIG[state.loc];
 
-  // Clear all previous error states
+  // Clear all previous errors
   document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
 
-  // Always required regardless of admission type
-  const alwaysRequired = [
-    { stateVal: state.dim4.barriers, grp: 'grp-dim4-barriers', dim: 4, label: 'Dim 4 — Engagement Barriers / Resistance Factors' },
-    { stateVal: state.dim4.locRationale, grp: 'grp-dim4-rationale', dim: 4, label: 'Dim 4 — Why This LOC Is Necessary for Engagement' },
-  ];
-
-  // Required only for continued stay
-  const continuedRequired = [
-    { stateVal: state.dim1.csStatus, grp: 'grp-dim1-cs-status', dim: 1, label: 'Dim 1 — Current Withdrawal Status' },
-    { stateVal: state.dim1.csProgress, grp: 'grp-dim1-cs-progress', dim: 1, label: 'Dim 1 — Response to Treatment / Progress' },
-    { stateVal: state.dim3.csGoals, grp: 'grp-dim3-cs-goals', dim: 3, label: 'Dim 3 — Remaining Psychiatric Treatment Goals' },
-    { stateVal: state.dim4.csGoals, grp: 'grp-dim4-cs-goals', dim: 4, label: 'Dim 4 — Remaining Readiness / Engagement Goals' },
-    { stateVal: state.dim5.csStatus, grp: 'grp-dim5-cs-status', dim: 5, label: 'Dim 5 — Current Relapse Risk Status' },
-    { stateVal: state.dim5.csProgress, grp: 'grp-dim5-cs-progress', dim: 5, label: 'Dim 5 — Relapse Prevention Progress / Remaining Goals' },
-    { stateVal: state.dim6.csStatus, grp: 'grp-dim6-cs-status', dim: 6, label: 'Dim 6 — Current Environmental Status' },
-    { stateVal: state.dim6.csProgress, grp: 'grp-dim6-cs-progress', dim: 6, label: 'Dim 6 — Discharge / Step-Down Planning Progress' },
-  ];
-
-  const toCheck = type === 'continued' ? [...alwaysRequired, ...continuedRequired] : alwaysRequired;
-
-  toCheck.forEach(({ stateVal, grp, dim, label }) => {
-    if (!stateVal || !stateVal.trim()) {
-      errors.push({ dim, grp, label });
-      const el = document.getElementById(grp);
+  function check(item, dim) {
+    const val = item.get();
+    if (!val || (typeof val === 'string' && !val.trim())) {
+      errors.push({ dim: dim || item.dim, grp: item.grp, label: item.label });
+      const el = document.getElementById(item.grp);
       if (el) el.classList.add('field-error');
     }
+  }
+
+  // Primary driver dimensions — always required regardless of admission type
+  cfg.primary.forEach(dimNum => {
+    (DIM_REQUIRED[dimNum] || []).forEach(item => check(item, dimNum));
   });
 
+  // Dim 4 barriers + rationale are always required (even when dim 4 isn't primary)
+  if (!cfg.primary.includes(4)) {
+    check({ get: () => state.dim4.barriers,     grp: 'grp-dim4-barriers',  label: 'Dim 4 — Engagement Barriers / Resistance Factors' }, 4);
+    check({ get: () => state.dim4.locRationale, grp: 'grp-dim4-rationale', label: 'Dim 4 — Why This LOC Is Necessary for Engagement' }, 4);
+  }
+
+  // Continued stay — all CS fields required
+  if (type === 'continued') {
+    CS_REQUIRED.forEach(item => check(item, item.dim));
+  }
+
   return errors;
+}
+
+// Show/hide req-star markers dynamically when LOC changes
+function updateRequiredMarkers() {
+  if (!state.loc) return;
+  const cfg = LOC_CONFIG[state.loc];
+  // Hide all dynamic req stars first
+  document.querySelectorAll('.req-star[class*="-req"]').forEach(el => el.style.display = 'none');
+  // Show for primary dims
+  cfg.primary.forEach(n => {
+    document.querySelectorAll(`.dim${n}-req`).forEach(el => el.style.display = 'inline');
+  });
+  // Dim 4 barriers/rationale always shown
+  document.querySelectorAll('.grp-dim4-always').forEach(el => el.style.display = 'inline');
 }
 
 // ═══════════════════════════════════════════════════
@@ -1600,7 +1759,6 @@ function generate() {
   const d1 = genDim1(), d2 = genDim2(), d3 = genDim3(), d4 = genDim4(), d5 = genDim5(), d6 = genDim6();
   const dims = [d1,d2,d3,d4,d5,d6];
 
-  // Header
   document.getElementById('outTitle').textContent = `Medical Necessity Documentation — ${cfg.name}`;
 
   const metaItems = [];
@@ -1608,21 +1766,17 @@ function generate() {
   if (state.date) metaItems.push(fmtDate(state.date));
   metaItems.push(state.admissionType === 'initial' ? 'Initial Admission' : 'Continued Stay');
 
-  const metaEl = document.getElementById('outMeta');
-  metaEl.innerHTML = metaItems.map(t => `<span>${t}</span>`).join('');
-
+  document.getElementById('outMeta').innerHTML = metaItems.map(t => `<span>${t}</span>`).join('');
   document.getElementById('outSummary').textContent = genSummary(dims);
 
   const secMap = [[d1,'sec1','outDim1'],[d2,'sec2','outDim2'],[d3,'sec3','outDim3'],[d4,'sec4','outDim4'],[d5,'sec5','outDim5'],[d6,'sec6','outDim6']];
   secMap.forEach(([text, secId, textId]) => {
     const sec = document.getElementById(secId);
-    const el = document.getElementById(textId);
-    if (text) { sec.style.display='block'; el.textContent=text; }
+    if (text) { sec.style.display='block'; document.getElementById(textId).textContent=text; }
     else { sec.style.display='none'; }
   });
 
   document.getElementById('outDetermination').textContent = genDetermination();
-
   document.getElementById('outputPlaceholder').style.display = 'none';
   document.getElementById('outputDoc').classList.add('visible');
 }
@@ -1630,13 +1784,37 @@ function generate() {
 // ═══════════════════════════════════════════════════
 // COPY
 // ═══════════════════════════════════════════════════
+function doCopy(text, btn) {
+  const promise = navigator.clipboard
+    ? navigator.clipboard.writeText(text)
+    : new Promise((res) => {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta); res();
+      });
+  promise.then(() => {
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = '✓ Copied';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+    }
+  });
+}
+
+function copySection(textId, btn) {
+  const el = document.getElementById(textId);
+  if (!el || !el.textContent.trim()) return;
+  doCopy(el.textContent.trim(), btn);
+}
+
 function copyOutput() {
   const doc = document.getElementById('outputDoc');
   if (!doc.classList.contains('visible')) return;
 
   const title = document.getElementById('outTitle').textContent;
-  const metaSpans = document.getElementById('outMeta').querySelectorAll('span');
-  const meta = Array.from(metaSpans).map(s=>s.textContent).join(' | ');
+  const meta = Array.from(document.getElementById('outMeta').querySelectorAll('span')).map(s=>s.textContent).join(' | ');
 
   const sections = [
     { label:'SUMMARY STATEMENT', id:'outSummary', secId:null },
@@ -1656,17 +1834,10 @@ function copyOutput() {
     if (content) text += `${s.label}\n${content}\n\n`;
   });
 
-  navigator.clipboard.writeText(text.trim()).then(() => {
-    const fb = document.getElementById('copyFeedback');
-    fb.classList.add('show');
-    setTimeout(() => fb.classList.remove('show'), 2500);
-  }).catch(() => {
-    // Fallback for older browsers
-    const ta = document.createElement('textarea');
-    ta.value = text.trim(); ta.style.position='fixed'; ta.style.opacity='0';
-    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta);
-  });
+  doCopy(text.trim(), null);
+  const fb = document.getElementById('copyFeedback');
+  fb.classList.add('show');
+  setTimeout(() => fb.classList.remove('show'), 2500);
 }
 </script>
 </body>
