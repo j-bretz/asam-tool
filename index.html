@@ -125,6 +125,7 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
   grid-template-columns: 400px 1fr;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* ─── LEFT PANEL ──────────────────────────── */
@@ -956,38 +957,7 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
             <textarea class="form-textarea" placeholder="What is the step-down plan? What environmental barriers remain?" oninput="state.dim6.csProgress=this.value;clearGrpError('grp-dim6-cs-progress')"></textarea>
           </div>
         </div>
-      </div>
-            <button class="severity-pill" onclick="setSeverity('dim6','envRisk','supportive',this)">Supportive</button>
-            <button class="severity-pill" onclick="setSeverity('dim6','envRisk','neutral',this)">Neutral</button>
-            <button class="severity-pill" onclick="setSeverity('dim6','envRisk','unsupportive',this)">Unsupportive</button>
-            <button class="severity-pill" onclick="setSeverity('dim6','envRisk','high_risk',this)">High Risk</button>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Current Living Situation</label>
-          <select class="form-select" onchange="state.dim6.living=this.value">
-            <option value="">— Select —</option>
-            <option value="stable">Stable housing (family home or independent)</option>
-            <option value="recovery_housing">Recovery / sober living housing</option>
-            <option value="unstable">Unstable / transitional housing</option>
-            <option value="homeless">Homeless / no fixed address</option>
-            <option value="active_users">Living with active substance users</option>
-            <option value="unsafe">Unsafe living environment</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Recovery Support System</label>
-          <select class="form-select" onchange="state.dim6.support=this.value">
-            <option value="">— Select —</option>
-            <option value="strong">Strong — Family/friends actively supportive of recovery</option>
-            <option value="limited">Limited — Some support present but insufficient</option>
-            <option value="absent">Absent — No meaningful support system</option>
-            <option value="using_peers">Primarily using peers — Social network consists of active users</option>
-            <option value="hostile">Hostile — Family/social network undermines recovery efforts</option>
-          </select>
-        </div>
+      </div><!-- /dim-6 -->
 
     </div><!-- /dim-content -->
   </div><!-- /left-panel -->
