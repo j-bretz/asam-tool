@@ -249,6 +249,47 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
 .form-textarea:focus { border-color: var(--border-focus); }
 .form-textarea::placeholder, .form-input::placeholder { color: #b0b8c5; }
 
+.sentence-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #8a6d3b;
+  background: #fffbf0;
+  border: 1px solid #f0e0b0;
+  border-radius: 3px;
+  padding: 2px 7px;
+  margin-bottom: 5px;
+  width: fit-content;
+}
+
+.proofread-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fff8e6;
+  border: 1px solid #f5c842;
+  border-left: 4px solid #e6a817;
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+}
+.proofread-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.proofread-text { font-size: 12px; color: #7a5200; line-height: 1.5; flex: 1; }
+.proofread-text strong { color: #5c3d00; font-weight: 600; }
+.proofread-dismiss {
+  background: none;
+  border: none;
+  color: #b07d20;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 2px;
+  flex-shrink: 0;
+  line-height: 1;
+  opacity: 0.7;
+}
+.proofread-dismiss:hover { opacity: 1; }
+
 .score-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
 .severity-pills { display: flex; gap: 5px; flex-wrap: wrap; }
@@ -638,7 +679,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
           <div class="form-group" id="grp-dim1-cs-progress">
             <label class="form-label">Response to Treatment / Progress<span class="req-star">*</span></label>
-            <textarea class="form-textarea" placeholder="Describe client's response to withdrawal management to date…" oninput="state.dim1.csProgress=this.value;clearGrpError('grp-dim1-cs-progress')"></textarea>
+            <div class="sentence-hint">✎ Write in complete sentences — pasted verbatim into output</div>
+            <textarea class="form-textarea" placeholder="e.g. Client has responded well to Librium taper protocol with CIWA scores declining from 18 at admission to 4 as of today. Tremor and diaphoresis have resolved; mild anxiety persists." oninput="state.dim1.csProgress=this.value;clearGrpError('grp-dim1-cs-progress')"></textarea>
           </div>
         </div>
       </div>
@@ -668,7 +710,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
 
         <div class="form-group" id="grp-dim2-impact">
           <label class="form-label">How Conditions Complicate Treatment<span class="req-star dim2-req" style="display:none">*</span></label>
-          <textarea class="form-textarea" placeholder="Describe how medical conditions affect safe engagement in lower levels of care…" oninput="state.dim2.impact=this.value;clearGrpError('grp-dim2-impact')"></textarea>
+          <div class="sentence-hint">✎ Write in complete sentences — pasted verbatim into output</div>
+          <textarea class="form-textarea" placeholder="e.g. Client's unmanaged hypertension and COPD require daily monitoring and increase the risk of medical complication during early sobriety, necessitating a level of care with 24-hour nursing oversight." oninput="state.dim2.impact=this.value;clearGrpError('grp-dim2-impact')"></textarea>
         </div>
 
         <div class="form-group">
@@ -694,7 +737,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
           <div class="form-group" id="grp-dim2-cs-progress">
             <label class="form-label">Progress / Response to Treatment<span class="req-star">*</span></label>
-            <textarea class="form-textarea" placeholder="Describe progress in managing biomedical conditions…" oninput="state.dim2.csProgress=this.value;clearGrpError('grp-dim2-cs-progress')"></textarea>
+            <div class="sentence-hint">✎ Write in complete sentences — pasted verbatim into output</div>
+            <textarea class="form-textarea" placeholder="e.g. Client's blood pressure has stabilized with medication compliance; daily vitals monitoring continues. COPD has not required acute intervention during this episode of care." oninput="state.dim2.csProgress=this.value;clearGrpError('grp-dim2-cs-progress')"></textarea>
           </div>
         </div>
       </div>
@@ -734,7 +778,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
 
         <div class="form-group" id="grp-dim3-impact">
           <label class="form-label">How Symptoms Impair Treatment Engagement or Safety<span class="req-star dim3-req" style="display:none">*</span></label>
-          <textarea class="form-textarea" placeholder="Describe how psychiatric symptoms limit the client's ability to safely engage in, retain benefit from, or remain stable in a less intensive setting…" oninput="state.dim3.impact=this.value;clearGrpError('grp-dim3-impact')"></textarea>
+          <div class="sentence-hint">✎ Write in complete sentences — pasted verbatim into output</div>
+          <textarea class="form-textarea" placeholder="e.g. Client's active depressive symptoms and passive suicidal ideation significantly impair her capacity to engage in structured programming and require daily clinical monitoring that cannot be provided at a lower level of care." oninput="state.dim3.impact=this.value;clearGrpError('grp-dim3-impact')"></textarea>
         </div>
 
         <div class="form-group">
@@ -755,7 +800,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
           <div class="form-group" id="grp-dim3-cs-goals">
             <label class="form-label">Remaining Psychiatric Treatment Goals<span class="req-star">*</span></label>
-            <textarea class="form-textarea" placeholder="What psychiatric goals remain? Why is continued level of care necessary?" oninput="state.dim3.csGoals=this.value;clearGrpError('grp-dim3-cs-goals')"></textarea>
+            <div class="sentence-hint">✎ Write in complete sentences — pasted verbatim into output</div>
+            <textarea class="form-textarea" placeholder="e.g. Client continues to experience passive suicidal ideation requiring daily safety assessments. Mood stabilization has not yet been achieved, and a step-down to outpatient services at this time would present significant clinical risk." oninput="state.dim3.csGoals=this.value;clearGrpError('grp-dim3-cs-goals')"></textarea>
           </div>
         </div>
       </div>
@@ -801,12 +847,14 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
 
         <div class="form-group" id="grp-dim4-barriers">
           <label class="form-label">Engagement Barriers / Resistance Factors<span class="req-star">*</span></label>
-          <textarea class="form-textarea" placeholder="Specific resistance, denial patterns, or barriers to engagement…" oninput="state.dim4.barriers=this.value;clearGrpError('grp-dim4-barriers')"></textarea>
+          <div class="sentence-hint">✎ Write in complete sentences — pasted verbatim into output</div>
+          <textarea class="form-textarea" placeholder="e.g. Client demonstrates significant ambivalence regarding the need for treatment, minimizing the severity of his substance use and attributing current circumstances to external factors rather than his addiction." oninput="state.dim4.barriers=this.value;clearGrpError('grp-dim4-barriers')"></textarea>
         </div>
 
         <div class="form-group" id="grp-dim4-rationale">
           <label class="form-label">Why This LOC Is Necessary for Engagement<span class="req-star">*</span></label>
-          <textarea class="form-textarea" placeholder="What level of structure or clinical intervention does the client's readiness level require?" oninput="state.dim4.locRationale=this.value;clearGrpError('grp-dim4-rationale')"></textarea>
+          <div class="sentence-hint">✎ Write in complete sentences — pasted verbatim into output</div>
+          <textarea class="form-textarea" placeholder="e.g. The degree of resistance and minimization present requires the containment and daily clinical contact of a residential setting to build the therapeutic alliance necessary for meaningful engagement." oninput="state.dim4.locRationale=this.value;clearGrpError('grp-dim4-rationale')"></textarea>
         </div>
 
         <div class="continued-section" id="dim4-cs" style="display:none">
@@ -822,7 +870,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
           <div class="form-group" id="grp-dim4-cs-goals">
             <label class="form-label">Remaining Readiness / Engagement Goals<span class="req-star">*</span></label>
-            <textarea class="form-textarea" placeholder="What engagement or motivation goals remain? What would support safe step-down?" oninput="state.dim4.csGoals=this.value;clearGrpError('grp-dim4-cs-goals')"></textarea>
+            <div class="sentence-hint">✎ Write in complete sentences — pasted verbatim into output</div>
+            <textarea class="form-textarea" placeholder="e.g. Client has not yet demonstrated sufficient internalization of recovery goals to sustain engagement without the daily structure of this level of care. Continued motivational interviewing and goal-setting work is required prior to step-down." oninput="state.dim4.csGoals=this.value;clearGrpError('grp-dim4-cs-goals')"></textarea>
           </div>
         </div>
       </div>
@@ -888,7 +937,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
           <div class="form-group" id="grp-dim5-cs-progress">
             <label class="form-label">Relapse Prevention Progress / Remaining Goals<span class="req-star">*</span></label>
-            <textarea class="form-textarea" placeholder="What skills have been developed? What gaps remain? Why is step-down not yet appropriate?" oninput="state.dim5.csProgress=this.value;clearGrpError('grp-dim5-cs-progress')"></textarea>
+            <div class="sentence-hint">✎ Write in complete sentences — pasted verbatim into output</div>
+            <textarea class="form-textarea" placeholder="e.g. Client has begun identifying primary relapse triggers but has not yet developed or practiced the coping strategies needed to manage them independently. Step-down is not appropriate until these skills are consolidated." oninput="state.dim5.csProgress=this.value;clearGrpError('grp-dim5-cs-progress')"></textarea>
           </div>
         </div>
       </div>
@@ -959,7 +1009,8 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
           </div>
           <div class="form-group" id="grp-dim6-cs-progress">
             <label class="form-label">Discharge / Step-Down Planning Progress<span class="req-star">*</span></label>
-            <textarea class="form-textarea" placeholder="What is the step-down plan? What environmental barriers remain?" oninput="state.dim6.csProgress=this.value;clearGrpError('grp-dim6-cs-progress')"></textarea>
+            <div class="sentence-hint">✎ Write in complete sentences — pasted verbatim into output</div>
+            <textarea class="form-textarea" placeholder="e.g. Client is being assessed for sober living placement; two options have been identified and are pending availability. Discharge to the current home environment remains clinically contraindicated due to the presence of active substance users in the household." oninput="state.dim6.csProgress=this.value;clearGrpError('grp-dim6-cs-progress')"></textarea>
           </div>
         </div>
       </div><!-- /dim-6 -->
@@ -981,6 +1032,15 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
       <div class="error-panel" id="errorPanel" style="display:none">
         <div class="error-panel-title">Complete the required fields before generating</div>
         <ul class="error-list" id="errorList"></ul>
+      </div>
+
+      <div class="proofread-banner" id="proofreadBanner" style="display:none">
+        <div class="proofread-icon">⚠</div>
+        <div class="proofread-text">
+          <strong>Proofread before submitting to Remarkable.</strong>
+          Review all generated text for clinical accuracy, correct client name usage, and completeness before copying into your documentation system.
+        </div>
+        <button class="proofread-dismiss" onclick="document.getElementById('proofreadBanner').style.display='none'" title="Dismiss">✕</button>
       </div>
 
       <div class="output-placeholder" id="outputPlaceholder">
@@ -1246,7 +1306,7 @@ function fmtDate(d) {
 // ═══════════════════════════════════════════════════
 function genDim1() {
   const d = state.dim1, loc = state.loc, type = state.admissionType;
-  const hasContent = d.severity || d.substances || d.symptoms.length || d.ciwa || d.cows || d.complicatedHistory || d.notes;
+  const hasContent = d.severity || d.substances || d.symptoms.length || d.ciwa || d.cows || d.complicatedHistory || d.notes || d.csStatus || d.csProgress;
   if (!hasContent) return null;
 
   let p = [];
@@ -1316,7 +1376,7 @@ function genDim1() {
 
 function genDim2() {
   const d = state.dim2, loc = state.loc, type = state.admissionType;
-  const hasContent = d.severity || d.conditions || d.impact || d.medications || d.notes;
+  const hasContent = d.severity || d.conditions || d.impact || d.medications || d.notes || d.csStatus || d.csProgress;
   if (!hasContent) return null;
 
   let p = [];
@@ -1358,7 +1418,7 @@ function genDim2() {
 
 function genDim3() {
   const d = state.dim3, loc = state.loc, type = state.admissionType;
-  const hasContent = d.severity || d.diagnoses || d.noDx || d.symptoms.length || d.impact || d.notes;
+  const hasContent = d.severity || d.diagnoses || d.noDx || d.symptoms.length || d.impact || d.notes || d.csStatus || d.csGoals;
   if (!hasContent) return null;
 
   let p = [];
@@ -1423,7 +1483,7 @@ function genDim3() {
 
 function genDim4() {
   const d = state.dim4, loc = state.loc, type = state.admissionType;
-  const hasContent = d.stage || d.insight || d.engagement || d.barriers || d.locRationale;
+  const hasContent = d.stage || d.insight || d.engagement || d.barriers || d.locRationale || d.csStatus || d.csGoals;
   if (!hasContent) return null;
 
   let p = [];
@@ -1451,7 +1511,7 @@ function genDim4() {
   };
   if (d.engagement && engagementMap[d.engagement]) p.push(engagementMap[d.engagement]);
 
-  if (d.barriers) p.push(`Identified engagement barriers include: ${d.barriers}`);
+  if (d.barriers) p.push(d.barriers);
 
   if (d.locRationale) {
     p.push(d.locRationale);
@@ -1472,7 +1532,7 @@ function genDim4() {
       inconsistent: `${C()}'s treatment engagement has been inconsistent throughout the current episode of care, reflecting ongoing ambivalence that requires continued intensive clinical structure and motivational support.`,
     };
     if (d.csStatus && sm[d.csStatus]) p.push(sm[d.csStatus]);
-    if (d.csGoals) p.push(`Remaining readiness and engagement goals: ${d.csGoals}`);
+    if (d.csGoals) p.push(d.csGoals);
   }
 
   return p.filter(Boolean).join(' ');
@@ -1480,7 +1540,7 @@ function genDim4() {
 
 function genDim5() {
   const d = state.dim5, loc = state.loc, type = state.admissionType;
-  const hasContent = d.risk || d.priorTx || d.triggers.length || d.coping || d.notes;
+  const hasContent = d.risk || d.priorTx || d.triggers.length || d.coping || d.notes || d.csStatus || d.csProgress;
   if (!hasContent) return null;
 
   let p = [];
@@ -1527,7 +1587,7 @@ function genDim5() {
 
 function genDim6() {
   const d = state.dim6, loc = state.loc, type = state.admissionType;
-  const hasContent = d.envRisk || d.living || d.support || d.risks.length || d.notes;
+  const hasContent = d.envRisk || d.living || d.support || d.risks.length || d.notes || d.csStatus || d.csProgress;
   if (!hasContent) return null;
 
   let p = [];
@@ -1777,6 +1837,7 @@ function generate() {
   document.getElementById('outDetermination').textContent = genDetermination();
   document.getElementById('outputPlaceholder').style.display = 'none';
   document.getElementById('outputDoc').classList.add('visible');
+  document.getElementById('proofreadBanner').style.display = 'flex';
 }
 
 // ═══════════════════════════════════════════════════
