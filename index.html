@@ -718,8 +718,13 @@ select.ctrl:focus, input.ctrl:focus { border-color: var(--border-focus); }
         </div>
 
         <div class="form-group" id="grp-dim3-diagnoses">
-          <label class="form-label">Psychiatric Diagnoses<span class="req-star dim3-req" style="display:none">*</span></label>
-          <input class="form-input" placeholder="e.g. MDD, PTSD, Bipolar I, GAD, Schizoaffective Disorder…" oninput="state.dim3.diagnoses=this.value;clearGrpError('grp-dim3-diagnoses')">
+          <label class="form-label" style="display:flex;align-items:center;justify-content:space-between">
+            <span>Psychiatric Diagnoses<span class="req-star dim3-req" style="display:none">*</span></span>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--text-secondary);cursor:pointer;text-transform:none;letter-spacing:0">
+              <input type="checkbox" id="dim3-no-dx" style="accent-color:var(--accent)" onchange="toggleNoDx(this.checked)"> No psychiatric diagnoses
+            </label>
+          </label>
+          <input class="form-input" id="dim3-dx-input" placeholder="e.g. MDD, PTSD, Bipolar I, GAD, Schizoaffective Disorder…" oninput="state.dim3.diagnoses=this.value;clearGrpError('grp-dim3-diagnoses')">
         </div>
 
         <div class="form-group">
@@ -1086,7 +1091,7 @@ const state = {
   loc: '', admissionType: 'initial', clientName: '', date: '',
   dim1: { severity:'', substances:'', lastUse:'', ciwa:'', cows:'', symptoms:[], complicatedHistory:'', notes:'', csStatus:'', csProgress:'' },
   dim2: { severity:'', conditions:'', impact:'', medications:'', notes:'', csStatus:'', csProgress:'' },
-  dim3: { severity:'', diagnoses:'', symptoms:[], impact:'', notes:'', csStatus:'', csGoals:'' },
+  dim3: { severity:'', diagnoses:'', noDx:false, symptoms:[], impact:'', notes:'', csStatus:'', csGoals:'' },
   dim4: { stage:'', insight:'', engagement:'', barriers:'', locRationale:'', csStatus:'', csGoals:'' },
   dim5: { risk:'', priorTx:'', triggers:[], coping:'', notes:'', csStatus:'', csProgress:'' },
   dim6: { envRisk:'', living:'', support:'', risks:[], notes:'', csStatus:'', csProgress:'' },
@@ -1148,6 +1153,23 @@ function setSeverity(dim, field, value, el) {
   el.classList.add('selected');
   const grp = el.closest('.form-group');
   if (grp) grp.classList.remove('field-error');
+}
+
+function toggleNoDx(checked) {
+  state.dim3.noDx = checked;
+  const input = document.getElementById('dim3-dx-input');
+  if (checked) {
+    input.disabled = true;
+    input.style.opacity = '0.4';
+    input.style.pointerEvents = 'none';
+    state.dim3.diagnoses = '';
+    input.value = '';
+    clearGrpError('grp-dim3-diagnoses');
+  } else {
+    input.disabled = false;
+    input.style.opacity = '';
+    input.style.pointerEvents = '';
+  }
 }
 
 function setAdmissionType(type) {
@@ -1336,17 +1358,23 @@ function genDim2() {
 
 function genDim3() {
   const d = state.dim3, loc = state.loc, type = state.admissionType;
-  const hasContent = d.severity || d.diagnoses || d.symptoms.length || d.impact || d.notes;
+  const hasContent = d.severity || d.diagnoses || d.noDx || d.symptoms.length || d.impact || d.notes;
   if (!hasContent) return null;
 
   let p = [];
 
   if (d.severity === 'none') {
     p.push(`${C()} does not present with significant emotional, behavioral, or cognitive conditions requiring elevated clinical intervention at this time.`);
-    if (d.diagnoses) p.push(`Psychiatric diagnoses of ${d.diagnoses} are noted and are currently stable.`);
+    if (d.noDx) {
+      p.push(`No current psychiatric diagnoses are reported.`);
+    } else if (d.diagnoses) {
+      p.push(`Psychiatric diagnoses of ${d.diagnoses} are noted and are currently stable.`);
+    }
   } else {
     const sevPhrase = { mild:'mild to moderate', moderate:'moderate', severe:'significant and clinically impairing' };
-    if (d.diagnoses) {
+    if (d.noDx) {
+      p.push(`${C()} presents with ${sevPhrase[d.severity]||d.severity} emotional, behavioral, and/or cognitive conditions complicating recovery. No formal psychiatric diagnoses are reported at this time.`);
+    } else if (d.diagnoses) {
       p.push(`${C()} presents with ${sevPhrase[d.severity]||d.severity} emotional, behavioral, and/or cognitive conditions complicating recovery. Documented psychiatric diagnoses include: ${d.diagnoses}.`);
     } else if (d.severity) {
       p.push(`${C()} presents with ${sevPhrase[d.severity]||d.severity} emotional, behavioral, and/or cognitive conditions with direct bearing on treatment planning.`);
@@ -1613,9 +1641,9 @@ const DIM_REQUIRED = {
     { get: () => state.dim2.impact,     grp: 'grp-dim2-impact',     label: 'Dim 2 — How Conditions Complicate Treatment' },
   ],
   3: [
-    { get: () => state.dim3.severity,  grp: 'grp-dim3-severity',  label: 'Dim 3 — Psychiatric / Cognitive Severity' },
-    { get: () => state.dim3.diagnoses, grp: 'grp-dim3-diagnoses', label: 'Dim 3 — Psychiatric Diagnoses' },
-    { get: () => state.dim3.impact,    grp: 'grp-dim3-impact',    label: 'Dim 3 — How Symptoms Impair Treatment Engagement or Safety' },
+    { get: () => state.dim3.severity,                           grp: 'grp-dim3-severity',  label: 'Dim 3 — Psychiatric / Cognitive Severity' },
+    { get: () => state.dim3.noDx ? 'exempt' : state.dim3.diagnoses, grp: 'grp-dim3-diagnoses', label: 'Dim 3 — Psychiatric Diagnoses (or check "No psychiatric diagnoses")' },
+    { get: () => state.dim3.impact,                             grp: 'grp-dim3-impact',    label: 'Dim 3 — How Symptoms Impair Treatment Engagement or Safety' },
   ],
   4: [
     { get: () => state.dim4.stage,       grp: 'grp-dim4-stage',      label: 'Dim 4 — Stage of Change' },
